@@ -25,13 +25,13 @@ public class TrafficSignal {
      * Constructor for this class, accepts an integer as signal type,
      * MUST USE SignalBehavior.TYPE_#, in order to function properly
      * 
-     * @param signalType    value of the signal type, must come from SignalBehavior class'
+     * @param SIGNAL_TYPE    value of the signal type, must come from SignalBehavior class'
      *                      dictionary 
      * @author Erik Clary
      * @since 1.0a
      */
-    public TrafficSignal(int signalType){
-        this.signalType = signalType;
+    public TrafficSignal(int SIGNAL_TYPE){
+        this.signalType = SIGNAL_TYPE;
     }
     
     /**
