@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mycompany.trafficsimulator;
 
 /**
@@ -12,11 +7,11 @@ package com.mycompany.trafficsimulator;
  * 
  * @author Erik Clary
  * @version %I%, %G%
- * @since 1.0a
+ * @since 1.01a
  * <p> <b>Date Created: </b>October 25, 2016 
  * <p> <b>Version Comments:</b> 
  *      <ul> 
- *          <li> 1.00a | 10/25/2016: Initial commit </li> 
+ *          <li> 1.01a | 10/25/2016: Initial commit </li> 
  *      </ul>
  */
 public class Road {
@@ -34,7 +29,7 @@ public class Road {
      * @param distance      the distance of this road from end to end
      * @param speedLimit    the speed limit of this road.
      * @author Erik Clary
-     * @since 1.00a
+     * @since 1.01a
      */
     public Road(String name, String direction, double distance, int speedLimit){
         this.roadName = name;
@@ -43,18 +38,46 @@ public class Road {
         this.speedLimit = speedLimit;
     }
     
+    /**
+     * returns this road's name.
+     * 
+     * @return the name of the road.
+     * @author Erik Clary
+     * @since 1.01a
+     */
     public String getName(){
         return roadName;
     }
     
+    /**
+     * returns this road's direction
+     * 
+     * @return direction of the road, <b>Format TBD</b>
+     * @author Erik Clary
+     * @since 1.01a
+     */
     public String getRoadDirection(){
         return roadDirection;
     }
     
+    /**
+     * returns this road's distance/length
+     * 
+     * @return the distance/length of the road.
+     * @author Erik Clary
+     * @since 1.01a
+     */
     public double getDistance(){
         return distance;
     }
     
+    /**
+     * returns this road's speed limit.
+     * 
+     * @return the speed limit of the road.
+     * @author Erik Clary
+     * @since 1.01a
+     */
     public int getSpeedLimit(){
         return speedLimit;
     }

@@ -10,21 +10,23 @@ import java.util.Queue;
  * 
  * @author Erik Clary
  * @version %I%, %G%
- * @since 1.0a
+ * @since 1.00a
  * <p> <b>Date Created: </b>October 24, 2016 
  * <p> <b>Version Comments:</b> 
  *      <ul> 
- *          <li> 1.0a | 10/24/2016: Initial commit </li> 
+ *          <li> 1.00a | 10/24/2016: Initial commit </li>
+ *          <li> 1.02a | 10/26/2016: Added actor implement, and changed act
+ *                                      method to match the interface's requirements.</li>
  *      </ul>
  */
-public class Car {
+public class Car implements Actor{
     public static final int WAITING_AT_SIGNAL = 0;
     public static final int TRAVELLING = 1;
     public static final int WAITING_TO_ENTER_SIGNAL_QUEUE = 2;
     
     private double timeAlive; //this should be in seconds.
     private Queue<String> directions; //maybe create a locations object to encapsulate compareTo, etc
-    final private int carType;
+    private final int carType;
     private double timeRemainingOnCurrentRoad;
     private int carStatus;
     
@@ -35,23 +37,31 @@ public class Car {
         carStatus = WAITING_TO_ENTER_SIGNAL_QUEUE;
     }
     
-    public void passContinueSignal(){
+    public String passContinueSignal(){
+        String nextRoad = directions.poll();
         carStatus = TRAVELLING;
-        timeRemainingOnCurrentRoad = CarBehavior.getTime(carType, directions.poll());
+        timeRemainingOnCurrentRoad = CarBehavior.getTime(carType, nextRoad);
+        return nextRoad;
     }
 
+    public int getCarStatus(){
+        return carStatus;
+    }
     
-    public int act(){
+    public void carAddedToSignal(){
+        carStatus = WAITING_AT_SIGNAL; //this is for readability and limiting outside class functionality of changing the car's status.
+    }
+    
+    @Override
+    public void act(){
         timeAlive += 1;
         if(carStatus == WAITING_AT_SIGNAL){
-            return carStatus; //if this car is waiting for a signal, do nothing.
+            return; //if this car is waiting for a signal, do nothing.
         }
         
         if(--timeRemainingOnCurrentRoad<=0){
             carStatus = WAITING_TO_ENTER_SIGNAL_QUEUE;
-            return carStatus;
+            return;
         }
-        
-        return carStatus;
     }
 }

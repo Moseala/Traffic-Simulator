@@ -1,6 +1,7 @@
 package com.mycompany.trafficsimulator;
 
 import com.sun.media.jfxmedia.logging.Logger;
+import java.util.ArrayList;
 import java.util.Queue;
 
 /**
@@ -14,17 +15,22 @@ import java.util.Queue;
  * <p> <b>Date Created: </b>October 24, 2016 
  * <p> <b>Version Comments:</b> 
  *      <ul> 
- *          <li> 1.00a | 10/24/2016: Initial commit </li> 
- *          <li> 1.01a | 10/25/2016: Added source road that feeds this traffic 
- *                                  signal for functionality with signal groups 
- *                                  and map. Also added .equals comparator and getIdentifier</li> 
+ *          <li> 1.00a | 10/24/2016:    Initial commit </li> 
+ *          <li> 1.01a | 10/25/2016:    Added source road that feeds this traffic 
+ *                                      signal for functionality with signal groups 
+ *                                      and map. Also added .equals comparator and getIdentifier</li>
+ *          <li> 1.02a | 10/26/2016:    Implemented Actor interface and its corresponding methods,
+ *                                      added flag implementation through thisSignalOn method.</li> 
  *      </ul>
  */
-public class TrafficSignal {
+    public class TrafficSignal implements Actor{
     final int signalType;
     private Queue<Car> carQueue;
+    private ArrayList<Car> roadCars;
+    private ArrayList<Car> outGoingCars;
     private Road sourceRoad;
     private String identifier;
+    private boolean lightActive;
     
     /**
      * Constructor for this class, accepts an integer as signal type,
@@ -41,22 +47,24 @@ public class TrafficSignal {
         this.signalType = SIGNAL_TYPE;
         sourceRoad = feedingRoad;
         identifier = uniqueIdentifier;
+        lightActive = false;
+        outGoingCars = new ArrayList(); // should find a better way do to outgoing cars via passing them directly to signal group actor
     }
     
     /**
-     * addCar method adds a car to this TrafficSignal's queue.
+     * addCar method adds a car to this TrafficSignal's feeder road.
      * 
-     * @param inCar         The car to be added to this queue.
+     * @param inCar         The car to be added to this signals feeder road.
      * @author Erik Clary
      * @since 1.00a
      */
     public void addCar(Car inCar){
-        if(!carQueue.add(inCar))
-            Logger.logMsg(1, "Car queue out of space, with object: " + this);
+        if(!roadCars.add(inCar))
+            Logger.logMsg(1, "Car feeder array out of space, in object: " + this);
     }
     
     /**
-     * removeNextCar dequeue's the next car in this TrafficSignal's queue and returns it.
+     * removeNextCar dequeues the next car in this TrafficSignal's queue and returns it.
      * 
      * @return a Car object
      * @author Erik Clary
@@ -98,6 +106,55 @@ public class TrafficSignal {
      */
     public boolean equals(TrafficSignal E){
         return this.identifier.equals(E.getIdentifier());
+    }
+    
+    /**
+     * thisSignalOn sets the lightActive flag to true. This is to limit out of
+     * class access to this variable.
+     * 
+     * @author Erik Clary
+     * @since 1.02a
+     */
+    private void thisSignalOn(){
+        lightActive = true;
+    }
+
+    /**
+     * act works in three steps: 
+     * <ol>
+     *      <li>Add all cars on the feeder road to the signal's pending queue.</li>
+     *      <li>Dequeue amount of cars based on this signal's behavior, and adds them to the outgoing 
+     *          car array.</li>
+     *      <li>Set the active flag to false, remember this act is 1 second, and the SignalGroup controls
+     *          which signals act at each cycle(tick).</li>
+     * </ol>
+     * <br>
+     * <b>Remember, the order of ticks must go: Car -> SignalGroup -> TrafficSignal, this way the en-route cars are moved into position before being flag checked by the TrafficSignals.</b>
+     * <br>
+     * Movement algorithm: Car acts are called first, then SignalGroup (which contain multiple TrafficSignals)
+     * make their TrafficSignals act, finally the signal groups pull Cars from the outGoingCars
+     * Array and sends them (adds them to the next TrafficSignals feederArray) to their next destination.
+     * 
+     * @author Erik Clary
+     * @since 1.02a
+     */
+    @Override
+    public void act() {
+        //Step 1: add all cars on road 
+        for(Car feeder: roadCars){
+            if(feeder.getCarStatus() == Car.WAITING_TO_ENTER_SIGNAL_QUEUE){
+                carQueue.add(feeder);
+                feeder.carAddedToSignal();
+                roadCars.remove(feeder);// this needs to be tested to ensure that the car is removed correctly
+            }
+        }
+        //Step 2: Check to see if signal is active: if so, then dequeue a car on tick, add to outgoing array, then sets light to false.
+        if(lightActive){
+            for(int i = 0; i< this.getBehavior().getCarAmountToRelease(); i++){
+                outGoingCars.add(carQueue.poll());
+            }
+            lightActive = false;
+        }
     }
     
 }
