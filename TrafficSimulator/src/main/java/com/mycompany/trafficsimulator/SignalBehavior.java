@@ -14,12 +14,17 @@ package com.mycompany.trafficsimulator;
  *      </ul>
  */
 class SignalBehavior {
-
-    SignalBehavior(int signalType) {
+    public final int signalType;
+    
+    public SignalBehavior(int signalType) {
+        this.signalType = signalType;
+    }
+    
+    public int timeToFunction(){
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    int getCarAmountToRelease() {
+    public int getCarAmountToRelease() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     

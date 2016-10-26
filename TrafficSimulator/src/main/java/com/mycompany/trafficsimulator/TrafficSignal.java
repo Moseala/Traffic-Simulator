@@ -28,8 +28,8 @@ import java.util.Queue;
     private Queue<Car> carQueue;
     private ArrayList<Car> roadCars;
     private ArrayList<Car> outGoingCars;
-    private Road sourceRoad;
-    private String identifier;
+    private final Road sourceRoad;
+    private final String identifier;
     private boolean lightActive;
     
     /**
@@ -115,7 +115,7 @@ import java.util.Queue;
      * @author Erik Clary
      * @since 1.02a
      */
-    private void thisSignalOn(){
+    public void thisSignalOn(){
         lightActive = true;
     }
 
@@ -157,4 +157,14 @@ import java.util.Queue;
         }
     }
     
+    /**
+     * This method returns an array of cars that are leaving this signal.
+     * 
+     * @return an array that contains all cars that are leaving this signal.
+     * @author Erik Clary
+     * @since 1.02a
+     */
+    public ArrayList<Car> getOutgoingCars(){
+        return outGoingCars;
+    }
 }
