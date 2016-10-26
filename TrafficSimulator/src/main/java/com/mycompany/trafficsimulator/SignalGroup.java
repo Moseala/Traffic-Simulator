@@ -14,7 +14,7 @@ import java.util.ArrayList;
  * <p> <b>Version Comments:</b> 
  *      <ul> 
  *          <li> 1.01a | 10/25/2016: Initial commit </li> 
- *          <li> 1.02a | 10/26/2016: Added javadoc for existing methods. </li> 
+ *          <li> 1.02a | 10/26/2016: Added javadoc for existing methods. Added act method and finished it up, may require some tuning.</li> 
  *      </ul>
  */
 public class SignalGroup implements Actor{
