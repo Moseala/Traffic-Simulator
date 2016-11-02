@@ -15,6 +15,7 @@ import java.util.ArrayList;
  *      <ul> 
  *          <li> 1.01a | 10/25/2016: Initial commit </li> 
  *          <li> 1.02a | 10/26/2016: Added javadoc for existing methods. Added act method and finished it up, may require some tuning.</li> 
+ *          <li> 1.04a | 11/02/2016: Cleaned up javadoc </li> 
  *      </ul>
  */
 public class SignalGroup implements Actor{
@@ -47,14 +48,14 @@ public class SignalGroup implements Actor{
     /**
      * act works through these steps: 
      * <ol>
-     *      <li>Check to see if the group is ready for the next operation(if the current signals are done with their acts)</li>
-     *      <ul><li>If so, reconstruct the signalCount array to match the next operationIterator group</li></ul>
-     *      <li>Check to see if the signalTime array has been depleted.</li>
-     *      <ul><li>If so, set ready for next operation flag to true, and prevent the signals without time left from acting.</li></ul>
+     *      <li>Check to see if the group is ready for the next operation(if the current signals are done with their acts)<br>
+     *          If so, reconstruct the signalCount array to match the next operationIterator group</li>
+     *      <li>Check to see if the signalTime array has been depleted.<br>
+     *          If so, set ready for next operation flag to true, and prevent the signals without time left from acting.</li>
      *      <li>Set signals that need to execute to signalOn. Remember, the map/stage will make them act, not this object.</li>
      * </ol>
      * <br>
-     * <b>Remember, the order of ticks must go: Car -> SignalGroup -> TrafficSignal, this way the en-route cars are moved into position before being flag checked by the TrafficSignals.</b>
+     * <b>Remember, the order of ticks must go: Car - SignalGroup - TrafficSignal, this way the en-route cars are moved into position before being flag checked by the TrafficSignals.</b>
      * <br>
      * Movement algorithm: Car acts are called first, then SignalGroup (which contain multiple TrafficSignals)
      * make their TrafficSignals act, finally the signal groups pull Cars from the outGoingCars

@@ -21,9 +21,11 @@ import java.util.Queue;
  *                                      and map. Also added .equals comparator and getIdentifier</li>
  *          <li> 1.02a | 10/26/2016:    Implemented Actor interface and its corresponding methods,
  *                                      added flag implementation through thisSignalOn method.</li> 
+ *          <li> 1.04a | 11/02/2016:    Cleaned up javadoc, added comparable to ready this class
+ *                                      for use in sorts.</li> 
  *      </ul>
  */
-    public class TrafficSignal implements Actor{
+    public class TrafficSignal implements Actor, Comparable{
     final int signalType;
     private Queue<Car> carQueue;
     private ArrayList<Car> roadCars;
@@ -100,8 +102,9 @@ import java.util.Queue;
      * equals compares two traffic signals, true if equal, false if they are not
      * this method compares the unique identifiers attached to the signal.
      * 
-     * @param TrafficSignal     The traffic signal to compare this to
+     * @param E                 The traffic signal to compare this to
      * @author Erik Clary
+     * @return True if the two signal's unique identifiers are equal. False otherwise.
      * @since 1.01a
      */
     public boolean equals(TrafficSignal E){
@@ -129,7 +132,7 @@ import java.util.Queue;
      *          which signals act at each cycle(tick).</li>
      * </ol>
      * <br>
-     * <b>Remember, the order of ticks must go: Car -> SignalGroup -> TrafficSignal, this way the en-route cars are moved into position before being flag checked by the TrafficSignals.</b>
+     * <b>Remember, the order of ticks must go: Car - SignalGroup - TrafficSignal, this way the en-route cars are moved into position before being flag checked by the TrafficSignals.</b>
      * <br>
      * Movement algorithm: Car acts are called first, then SignalGroup (which contain multiple TrafficSignals)
      * make their TrafficSignals act, finally the signal groups pull Cars from the outGoingCars
@@ -166,5 +169,13 @@ import java.util.Queue;
      */
     public ArrayList<Car> getOutgoingCars(){
         return outGoingCars;
+    }
+
+    @Override
+    public int compareTo(Object E) {
+        if(E.getClass()!= TrafficSignal.class){
+            Logger.logMsg(0, "CompareTo used incorrectly with " +this);
+        }
+        return this.identifier.compareTo(((TrafficSignal)E).getIdentifier());
     }
 }
