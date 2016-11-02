@@ -26,7 +26,7 @@ import java.util.Queue;
  *      </ul>
  */
     public class TrafficSignal implements Actor, Comparable{
-    final int signalType;
+    private final int signalType;
     private Queue<Car> carQueue;
     private ArrayList<Car> roadCars;
     private ArrayList<Car> outGoingCars;
@@ -177,5 +177,9 @@ import java.util.Queue;
             Logger.logMsg(0, "CompareTo used incorrectly with " +this);
         }
         return this.identifier.compareTo(((TrafficSignal)E).getIdentifier());
+    }
+    
+    public int compareTo(String identifier) {
+        return this.identifier.compareTo(identifier);
     }
 }

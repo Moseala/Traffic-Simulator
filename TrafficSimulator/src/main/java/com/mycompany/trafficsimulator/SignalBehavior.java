@@ -15,6 +15,9 @@ package com.mycompany.trafficsimulator;
  */
 class SignalBehavior {
     public final int signalType;
+    public final int DESPAWNER = 0;
+    public final int PASSTHROUGH = 1;
+    public final int REGULAR = 2;
     
     public SignalBehavior(int signalType) {
         this.signalType = signalType;

@@ -1,11 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mycompany.trafficsimulator;
 
+import com.sun.media.jfxmedia.logging.Logger;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -55,6 +53,9 @@ public class Map implements Runnable{
             actors.add(e);
         }
         
+        Collections.sort(signals);
+        //remember to sort traffic signal arrayL
+        
     }
     
     /**
@@ -68,11 +69,16 @@ public class Map implements Runnable{
                 actors.get(inner).act();
             }
             for(TrafficSignal e:signals){ //this is the loop that moves the outgoing cars from their traffic signals to their new destination.
+                //if(e.getBehavior() == SignalBehavior.) a debendency or swtich on traffic signal behavior need to be created? depends on how chris will have the signals work
                 for(int outCarsIterator =0; outCarsIterator <e.getOutgoingCars().size(); outCarsIterator++){
                     Car outCar = e.getOutgoingCars().get(outCarsIterator);
-                    String nextQueue = outCar.passContinueSignal();
-                    if(verifyNextDirection(nextQueue,e)){
-                        
+                    String nextQueue = outCar.passContinueSignal(); //gives the car its continue flag, pull the ID
+                    if(verifyNextDirection(nextQueue,e)){ 
+                        findTrafficSignal(nextQueue,0,signals.size()).addCar(outCar); //adds the car to its next destination traffic signal
+                    }
+                    else{
+                        Logger.logMsg(0, "Car " + outCar +" does not have a good next path.");
+                        despawnedCars.add(outCar);
                     }
                 }
                 e.getOutgoingCars().clear(); //clears the outGoingCars AL; maybe better implemented with a queue.
@@ -109,7 +115,20 @@ public class Map implements Runnable{
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-   
+    //needs to be tested
+    private TrafficSignal findTrafficSignal(String identifier, int begin, int end){
+        if(begin<=end){
+            int mid = ((end-begin)/2)+begin; //midpoint
+            int compared = signals.get(mid).compareTo(end);
+            if(compared ==0) //completed escape
+                return signals.get(mid); 
+            if(compared < 0)
+                return findTrafficSignal(identifier,begin,mid-1);
+            if(compared > 0)
+                return findTrafficSignal(identifier,mid+1,end);
+        }
+        return null;
+    }
     
     
 }

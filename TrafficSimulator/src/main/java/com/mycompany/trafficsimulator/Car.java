@@ -25,7 +25,7 @@ public class Car implements Actor{
     public static final int WAITING_TO_ENTER_SIGNAL_QUEUE = 2;
     
     private double timeAlive; //this should be in seconds.
-    private Queue<String> directions; //maybe create a locations object to encapsulate compareTo, etc
+    private Queue<String> directions; //directions MUST BE UNIQUE TRAFFIC SIGNAL IDs otherwise map's transfer algo will die.
     private final int carType;
     private double timeRemainingOnCurrentRoad;
     private int carStatus;
