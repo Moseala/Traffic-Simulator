@@ -17,6 +17,7 @@ import java.util.ArrayList;
  *          <li> 1.02a | 10/26/2016: Added javadoc for existing methods. Added act method and finished it up, may require some tuning.</li> 
  *          <li> 1.04a | 11/02/2016: Cleaned up javadoc </li>
  *          <li> 1.05a | 11/07/2016: Revamped functionality for easier car passing; the exit road list is now populated by the traffic signals instead of the roads.
+ *                                   Added hasEntrance and getExits for functionality with DirectionCreation.</li>
  *      </ul>
  */
 public class SignalGroup implements Actor{
@@ -113,6 +114,7 @@ public class SignalGroup implements Actor{
      * @param id2   unique signal ID for the other signal
      * @return True if both of the unique ID's are contained in this signal group.  False otherwise.
      * @see Map
+     * @since 1.05a
      */
     public boolean containsBoth(String id1, String id2) {
         boolean exit= false, feeder = false;
@@ -127,6 +129,26 @@ public class SignalGroup implements Actor{
             }
         }
         return (feeder && exit);
+    }
+
+    /**
+     * This method returns true if the passed TrafficSignal's ID is contined in this group's traffic signals.
+     * 
+     * @param currentPoint The traffic signal to be found in this group.
+     * @return True if the parameter is contained within this signal group's TrafficSignals.
+     * @since 1.05a
+     */
+    public boolean hasEntrance(TrafficSignal currentPoint) {
+        return trafficSignals.contains(currentPoint);
+    }
+
+    /**
+     * This method returns the exit signals contained in this group.
+     * @return The exit roads of this SignalGroup.
+     * @since 1.05a
+     */
+    ArrayList<TrafficSignal> getExitSignals() {
+        return exitRoads;
     }
     
 }

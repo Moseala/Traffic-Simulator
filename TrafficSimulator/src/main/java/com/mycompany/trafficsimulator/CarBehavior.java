@@ -24,6 +24,7 @@ public class CarBehavior {
         switch(carType){
             case 0: return (length/(speed*3600));  //Speed calc is as such: length/speed * 60(mins) * 60(secs) to produce the time in seconds it would take for the car to run.
         }
+        return -1; //if this is reached something has gone horribly wrong.
     }
     
 }

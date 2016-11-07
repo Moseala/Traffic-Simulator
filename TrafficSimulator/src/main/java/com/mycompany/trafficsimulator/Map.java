@@ -2,7 +2,6 @@ package com.mycompany.trafficsimulator;
 
 import com.sun.media.jfxmedia.logging.Logger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -20,14 +19,14 @@ import java.util.Queue;
  *      <ul> 
  *          <li> 1.03a | 11/1/2016: Initial commit </li> 
  *          <li> 1.04a | 11/2/2016: Added supporting methods, run, and made Map a runnable </li> 
- *          <li> 1.05a | 11/7/2016: Added javadoc, finished map's execution logic 
+ *          <li> 1.05a | 11/7/2016: Added javadoc, finished map's execution logic, added metric pull methods
  *      </ul>
  */
 public class Map implements Runnable{
-    private LinkedList<Actor> actors = new LinkedList();
-    private ArrayList<SignalGroup> nodes;
-    private ArrayList<TrafficSignal> signals;
-    private Queue<Car> spawnCars;
+    private LinkedList<Actor> actors = new LinkedList(); //this cannot be final, actors are removed and added.
+    private final ArrayList<SignalGroup> nodes;
+    private final ArrayList<TrafficSignal> signals;
+    private Queue<Car> spawnCars;       //this cannot be final, it is added to on empty poll.
     private ArrayList<Car> despawnedCars;
     private int currentRunningSecond = 0;
     
@@ -75,6 +74,7 @@ public class Map implements Runnable{
      *              <li><b>If the move is invalid, the cars will be despawned, and will be logged that they didnt have the correct pathing.</b></li>
      *              <li>The traffic signal's exit queue is then cleared to prevent duplicate cars.</li> 
      *          </ol>
+     * @since 1.04a
      */
     @Override
     public void run() {
@@ -103,7 +103,7 @@ public class Map implements Runnable{
                         }
                     }
                 }
-                e.getOutgoingCars().clear(); //clears the outGoingCars AL; maybe better implemented with a queue.
+                e.clearOutGoingCars(); //clears the outGoingCars AL; maybe better implemented with a queue. this provides a by value reference, so this does not work.
             }
         }
     } 
@@ -111,9 +111,20 @@ public class Map implements Runnable{
     /**
      * This method returns the progress of the map's simulation
      * @return A percentage representing the completion progress of the simulation.
+     * @since 1.04a
      */
     public double getProgress(){
         return ((double)currentRunningSecond)/TIMETORUN;
+    }
+    
+    /**
+     * This method returns the list of cars that have finished their routes (or got lost). 
+     * Only call this method after run() has completed (you can check getProgress for a 1.0 value)
+     * @return An ArrayList populated by the cars that have finished their routes.
+     * @since 1.05a
+     */
+    public ArrayList<Car> getDespawnedCars(){
+        return despawnedCars;
     }
     
     /**
@@ -121,6 +132,7 @@ public class Map implements Runnable{
      * 
      * @param currentMoment The current running second of the simulation.
      * @return The curve value based on the passed value.
+     * @since 1.04a
      */
     private int carCurve(int currentMoment){
         return  (int) ((Math.abs(Math.sin(PERIOD*currentMoment))*AMPLITUDE) + ySHIFT);
@@ -130,6 +142,7 @@ public class Map implements Runnable{
      * This method adds the amount of cars(based on the current running second) to the actor queue, then adds them to their respective
      * feeder roads by popping their first direction (which is their spawn signal) and searching for its traffic signal.
      * @param currentMoment 
+     * @since 1.04a
      */
     private void addCars(int currentMoment){
         if(spawnCars.peek()==null){
@@ -144,6 +157,7 @@ public class Map implements Runnable{
 
     /**
      * This method will poll the XML/main for more cars to add to the feeder queue.
+     * @since 1.04a
      */
     private void requestMoreCars() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -155,6 +169,7 @@ public class Map implements Runnable{
      * @param e         The traffic signal that the car is currently being released from.
      * @return          True if the nextQueue is contained in the same traffic group as e, false otherwise.
      * @see SignalGroup
+     * @since 1.04a
      */
     private boolean verifyNextDirection(String nextQueue, TrafficSignal e) {
         for(SignalGroup group:nodes){
@@ -171,6 +186,7 @@ public class Map implements Runnable{
      * @param begin         Beginning index to search (should always be 0)
      * @param end           End index to search (should always be list.size())
      * @return The TrafficSignal that has a unique identifier that matches the parameter, null otherwise.
+     * @since 1.04a
      */
     private TrafficSignal findTrafficSignal(String identifier, int begin, int end){//needs to be tested
         if(begin<=end){
@@ -182,6 +198,21 @@ public class Map implements Runnable{
                 return findTrafficSignal(identifier,begin,mid-1);
             if(compared > 0)
                 return findTrafficSignal(identifier,mid+1,end);
+        }
+        return null;
+    }
+
+    /**
+     * This method returns an array of exits for the given parameter.
+     * @param currentPoint  The traffic signal that you want the exits of.
+     * @return The exits of the parameter given.
+     * @since 1.05a
+     * @see DirectionCreation
+     */
+    public ArrayList<TrafficSignal> getExitsOf(TrafficSignal currentPoint) {
+        for(SignalGroup e: nodes){
+            if(e.hasEntrance(currentPoint))
+                return e.getExitSignals();
         }
         return null;
     }

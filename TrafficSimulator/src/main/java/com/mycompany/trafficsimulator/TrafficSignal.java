@@ -2,6 +2,7 @@ package com.mycompany.trafficsimulator;
 
 import com.sun.media.jfxmedia.logging.Logger;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Queue;
 
 /**
@@ -23,14 +24,18 @@ import java.util.Queue;
  *                                      added flag implementation through thisSignalOn method.</li> 
  *          <li> 1.04a | 11/02/2016:    Cleaned up javadoc, added comparable to ready this class
  *                                      for use in sorts.</li> 
+ *          <li> 1.05a | 11/07/2016:    Added missing javadoc, and @since tags.
+ *                                      Implemented Comparator, and added required methods.
+ *                                      Added overriding .equals for compatibility with ArrayList.contains</li>
  *      </ul>
  */
-    public class TrafficSignal implements Actor, Comparable{
+    public class TrafficSignal implements Actor, Comparable, Comparator<TrafficSignal>{
     private final int signalType;
     private Queue<Car> carQueue;
     private ArrayList<Car> roadCars;
-    private ArrayList<Car> outGoingCars;
+    private ArrayList<Car> outGoingCars; //this cannot be final. It is dumped and inserted to often.
     private final Road sourceRoad;
+    private final int[] coordinates;
     private final String identifier;
     private boolean lightActive;
     
@@ -38,19 +43,21 @@ import java.util.Queue;
      * Constructor for this class, accepts an integer as signal type,
      * MUST USE SignalBehavior.TYPE_#, in order to function properly
      * 
-     * @param SIGNAL_TYPE   value of the signal type, must come from SignalBehavior class'
-     *                      dictionary 
-     * @param feedingRoad   the road that feeds into this traffic signal
+     * @param SIGNAL_TYPE       value of the signal type, must come from SignalBehavior class'
+     *                          dictionary 
+     * @param feedingRoad       the road that feeds into this traffic signal
      * @param uniqueIdentifier  the unique identifier that represents this traffic signal.
+     * @param coordinates       an array of size 2 that contains the x,y coordinates of this traffic signal. <b>Note: This must be of size 2</b>
      * @author Erik Clary
      * @since 1.00a
      */
-    public TrafficSignal(int SIGNAL_TYPE, Road feedingRoad, String uniqueIdentifier){
+    public TrafficSignal(int SIGNAL_TYPE, Road feedingRoad, String uniqueIdentifier, int[] coordinates){
         this.signalType = SIGNAL_TYPE;
         sourceRoad = feedingRoad;
         identifier = uniqueIdentifier;
         lightActive = false;
         outGoingCars = new ArrayList(); // should find a better way do to outgoing cars via passing them directly to signal group actor
+        this.coordinates = coordinates;
     }
     
     /**
@@ -112,6 +119,20 @@ import java.util.Queue;
     }
     
     /**
+     * equals compares two traffic signals, true if equal, false if they are not
+     * this method compares the unique identifiers attached to the signal.
+     * 
+     * @param E                 The traffic signal to compare this to
+     * @author Erik Clary
+     * @return True if the two signal's unique identifiers are equal. False otherwise.
+     * @since 1.05a
+     */
+    @Override
+    public boolean equals(Object E){
+        return this.identifier.equals(((TrafficSignal)E).getIdentifier());
+    }
+    
+    /**
      * thisSignalOn sets the lightActive flag to true. This is to limit out of
      * class access to this variable.
      * 
@@ -161,7 +182,8 @@ import java.util.Queue;
     }
     
     /**
-     * This method returns an array of cars that are leaving this signal.
+     * This method returns an array of cars that are leaving this signal. This 
+     * method will also clear the outGoingCar array.
      * 
      * @return an array that contains all cars that are leaving this signal.
      * @author Erik Clary
@@ -171,6 +193,14 @@ import java.util.Queue;
         return outGoingCars;
     }
 
+    /**
+     * This method returns the difference between the two traffic signals unique ID's (string) compareTo.
+     * <b> This method can only compare two traffic signals, otherwise it will fail.</b>
+     * @param E The other Traffic Signal for this to be compared to.
+     * @return Difference between the two traffic signals' unique identifiers as int.
+     * @since 1.04a
+     * @see Comparable
+     */
     @Override
     public int compareTo(Object E) {
         if(E.getClass()!= TrafficSignal.class){
@@ -179,7 +209,69 @@ import java.util.Queue;
         return this.identifier.compareTo(((TrafficSignal)E).getIdentifier());
     }
     
+    /**
+     * This method is functionally the same as the overrode compareTo, but uses a string as the paramter (which should always be another TrafficSignal's ID)
+     * 
+     * @param identifier The other Traffic Signal's identifier for this to be compared to.
+     * @return Difference between the two traffic signals' unique identifiers as int.
+     * @since 1.04a
+     * @see Comparable
+     */
     public int compareTo(String identifier) {
         return this.identifier.compareTo(identifier);
+    }
+    
+    /**
+     * This method returns a euclidian distance calculation between this traffic signal and the other(parameter).
+     * @param other The traffic signal to find the distance to.
+     * @return The distance between the two TrafficSignals as double.
+     * @since 1.05a
+     */
+    public double getDistanceFrom(TrafficSignal other){
+        if(getCoordinates().length !=2){
+            Logger.logMsg(1, "Traffic Signal " + identifier + "was created with a wrong coordinate length. Shutdown operation and recreate map.");
+            return -1;
+        }
+            
+        double x = Math.pow(coordinates[0]-other.getCoordinates()[0], 2);
+        double y = Math.pow(coordinates[1]-other.getCoordinates()[1], 2);
+        return Math.sqrt(x+y);
+    }
+    
+    /**
+     * This method returns the coordinate array for this TrafficSignal.
+     * @return The coordinate array as int[] of size 2.
+     * @since 1.05a
+     */
+    public int[] getCoordinates(){
+        return coordinates;
+    }
+
+    /**
+     * This method clears this traffic signal's outgoing cars array, should be called after the Map's moved all cars out of the array to their new destinations.
+     * @since 1.05a
+     * @see Map
+     */
+    public void clearOutGoingCars() {
+        outGoingCars.clear();
+    }
+
+    /**
+     * This method is required by java's Comparator interface. It returns the difference of distance between two traffic signals as int.
+     * @param t     A traffic signal to be compared.
+     * @param t1    Another traffic signal to be comared.
+     * @return      The distance between the two given TrafficSignals as int.
+     * @since 1.05a
+     */
+    @Override
+    public int compare(TrafficSignal t, TrafficSignal t1) {
+        if(t1.getCoordinates().length !=2){
+            Logger.logMsg(1, "Traffic Signal " + t1.getIdentifier() + "was created with a wrong coordinate length. Shutdown operation and recreate map.");
+            return -1;
+        }
+            
+        double x = Math.pow(t1.getCoordinates()[0]-t.getCoordinates()[0], 2);
+        double y = Math.pow(t1.getCoordinates()[1]-t.getCoordinates()[1], 2);
+        return (int)Math.sqrt(x+y);
     }
 }

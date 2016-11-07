@@ -67,6 +67,7 @@ public class Car implements Actor{
     /**
      * This method returns the amount of time the car has been alive for.
      * @return Time this car has been alive for as double.
+     * @since 1.05a
      */
     public double getAliveTime(){
         return timeAlive;
