@@ -15,14 +15,15 @@ import java.util.ArrayList;
  *      <ul> 
  *          <li> 1.01a | 10/25/2016: Initial commit </li> 
  *          <li> 1.02a | 10/26/2016: Added javadoc for existing methods. Added act method and finished it up, may require some tuning.</li> 
- *          <li> 1.04a | 11/02/2016: Cleaned up javadoc </li> 
+ *          <li> 1.04a | 11/02/2016: Cleaned up javadoc </li>
+ *          <li> 1.05a | 11/07/2016: Revamped functionality for easier car passing; the exit road list is now populated by the traffic signals instead of the roads.
  *      </ul>
  */
 public class SignalGroup implements Actor{
     private int operationIterator;
     private boolean readyForNextOperation;
     private int[] signalTimeArray;
-    private final ArrayList<Road> exitRoads;
+    private final ArrayList<TrafficSignal> exitRoads;
     private final ArrayList<TrafficSignal> trafficSignals;
     private final ArrayList<TrafficSignal[]> operationOrder; //the order of the array list is the order 
                                              //that the signals operate, the TrafficSignal[] stored 
@@ -38,7 +39,7 @@ public class SignalGroup implements Actor{
      * @author Erik Clary
      * @since 1.01a
      */
-    public SignalGroup(ArrayList<Road> exitRoads, ArrayList<TrafficSignal> trafficSignals, ArrayList<TrafficSignal[]> operationOrder){
+    public SignalGroup(ArrayList<TrafficSignal> exitRoads, ArrayList<TrafficSignal> trafficSignals, ArrayList<TrafficSignal[]> operationOrder){
         this.exitRoads = exitRoads;
         this.trafficSignals = trafficSignals;
         this.operationOrder = operationOrder;
@@ -103,6 +104,29 @@ public class SignalGroup implements Actor{
                 return false;
         }
         return true;
+    }
+
+    /**
+     * This method is used by map's verifyNextDirection to check if both of the unique id's are contained in this signal group.
+     * 
+     * @param id1   unique signal ID for one signal
+     * @param id2   unique signal ID for the other signal
+     * @return True if both of the unique ID's are contained in this signal group.  False otherwise.
+     * @see Map
+     */
+    public boolean containsBoth(String id1, String id2) {
+        boolean exit= false, feeder = false;
+        for(int x = 0; x<exitRoads.size(); x++){
+            if(exitRoads.get(x).getIdentifier().equalsIgnoreCase(id2) || exitRoads.get(x).getIdentifier().equalsIgnoreCase(id1)){
+                exit = true;
+            }
+        }
+        for(int x = 0; x<trafficSignals.size(); x++){
+            if(trafficSignals.get(x).getIdentifier().equalsIgnoreCase(id2) || trafficSignals.get(x).getIdentifier().equalsIgnoreCase(id1)){
+                feeder = true;
+            }
+        }
+        return (feeder && exit);
     }
     
 }
