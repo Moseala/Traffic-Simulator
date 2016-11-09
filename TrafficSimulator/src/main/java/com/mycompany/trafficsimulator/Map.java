@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Random;
 
 /**
  * The Map class contains all the actors for the Traffic Simulation. It also contains the 
@@ -19,7 +20,9 @@ import java.util.Queue;
  *      <ul> 
  *          <li> 1.03a | 11/1/2016: Initial commit </li> 
  *          <li> 1.04a | 11/2/2016: Added supporting methods, run, and made Map a runnable </li> 
- *          <li> 1.05a | 11/7/2016: Added javadoc, finished map's execution logic, added metric pull methods
+ *          <li> 1.05a | 11/7/2016: Added javadoc, finished map's execution logic, added metric pull methods</li>
+ *          <li> 1.07a | 11/9/2016: Added supporting methods getTotalCarsNeeded and getRandomPoint for use in creation logic.
+ *                                  Shifted the addition of cars to the queue outside of the constructor into its own method.</li>
  *      </ul>
  */
 public class Map implements Runnable{
@@ -43,12 +46,10 @@ public class Map implements Runnable{
      * 
      * @param signalGroups      An array list containing all the signal groups(nodes) in the map.
      * @param trafficSignals    An array list containing all the traffic signals in the map.
-     * @param cars              A queue of cars to pull from and insert into the system.
      */
-    public Map(ArrayList<SignalGroup> signalGroups, ArrayList<TrafficSignal> trafficSignals, Queue<Car> cars){
+    public Map(ArrayList<SignalGroup> signalGroups, ArrayList<TrafficSignal> trafficSignals){
         nodes = signalGroups;
         signals = trafficSignals;
-        spawnCars = cars;
         
         //empty map starting configuration
         for(SignalGroup e: signalGroups){
@@ -58,9 +59,17 @@ public class Map implements Runnable{
             actors.add(e);
         }
         
+    }
+    
+    /**
+     * This will insert the initial queue of cars for the map to use; this should be called before the Map is run, otherwise it will automatically request
+     * more cars to run.
+     * @param cars              A queue of cars to pull from and insert into the system.
+     * @since 1.07a
+     */
+    public void addInitialCars(Queue<Car> cars){
+        spawnCars = cars;
         Collections.sort(signals);
-        //remember to sort traffic signal arrayL
-        
     }
     
     /**
@@ -103,7 +112,7 @@ public class Map implements Runnable{
                         }
                     }
                 }
-                e.clearOutGoingCars(); //clears the outGoingCars AL; maybe better implemented with a queue. this provides a by value reference, so this does not work.
+                e.clearOutGoingCars(); //clears the outGoingCars AL; 
             }
         }
     } 
@@ -216,6 +225,29 @@ public class Map implements Runnable{
         }
         return null;
     }
-    
+
+    /**
+     * Returns the integral of the car curve between 0 and TIMETORUN
+     * @return the amount of cars that will be required for this map to run completely.
+     * @since 1.07a
+     */
+    public int getTotalCarsNeeded() {
+        int returnable = 0;
+        for(int x = 0; x<TIMETORUN; x++){
+            returnable += carCurve(x);
+        }
+        return returnable;
+    }
+
+    /**
+     * This will return a random trafficSignal in the map.
+     * @param seed  The random object for this method to use. Make sure to pass it the object you've been using for the rest of the seeds, otherwise
+     *              the run-to-run operation of this method will be compromised.
+     * @return A random traffic signal pulled from the list in this map.
+     * @since 1.07a
+     */
+    public TrafficSignal getRandomPoint(Random seed){
+        return signals.get((seed.nextInt(signals.size())));
+    }
     
 }

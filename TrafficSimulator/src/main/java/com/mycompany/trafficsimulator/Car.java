@@ -18,6 +18,7 @@ import java.util.Queue;
  *          <li> 1.02a | 10/26/2016: Added actor implement, and changed act
  *                                      method to match the interface's requirements.</li>
  *          <li> 1.05a | 11/07/2016: Added missing javadoc, added getTimeAlive method for metrics.</li>
+ *          <li> 1.07a | 11/09/2016: Added start/end points, needs to be finished.
  *      </ul>
  */
 public class Car implements Actor{
@@ -32,6 +33,8 @@ public class Car implements Actor{
     private final int carType;
     private double timeRemainingOnCurrentRoad;
     private int carStatus;
+    private String startPoint;
+    private String endPoint;
     
     /**
      * Constructor for car object, car status defaults to WAITING_TO_ENTER_SIGNAL_QUEUE, as it should be waiting to be spawned.

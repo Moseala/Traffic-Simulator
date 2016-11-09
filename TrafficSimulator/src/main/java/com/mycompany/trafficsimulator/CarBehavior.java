@@ -11,7 +11,8 @@ package com.mycompany.trafficsimulator;
  * <p> <b>Version Comments:</b> 
  *      <ul> 
  *          <li> 1.02a | 10/26/2016: Initial commit </li> 
- *          <li> 1.05a | 11/07/2016: Added getTime method skeleton, incomplete.
+ *          <li> 1.05a | 11/07/2016: Added getTime method skeleton, incomplete.</li>
+ *          <li> 1.07a | 11/09/2016: Deleted uneccesary return from getTime
  *      </ul>
  */
 public class CarBehavior {
@@ -19,12 +20,11 @@ public class CarBehavior {
     public final int REGULAR = 0;
 
     static double getTime(int carType, String nextRoad) {
-        double length = XLSX.getRoadLength(nextRoad); //to be implemented with commit of xlsx class
-        double speed = XLSX.getRoadSpeed(nextRoad);//to be implemented with commit of xlsx class
+        double length = ReadExcel.getRoadLength(nextRoad); //to be implemented with commit of xlsx class
+        double speed = ReadExcel.getRoadSpeed(nextRoad);//to be implemented with commit of xlsx class
         switch(carType){
             case 0: return (length/(speed*3600));  //Speed calc is as such: length/speed * 60(mins) * 60(secs) to produce the time in seconds it would take for the car to run.
+            default: return (length/(speed*3600));
         }
-        return -1; //if this is reached something has gone horribly wrong.
     }
-    
 }

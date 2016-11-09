@@ -15,7 +15,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  * ReadExcel class is responsible for reading in the excel file and populating 
- * Roads, Traffic Signals, and Signal Groups.
+ * roads, Traffic Signals, and Signal Groups.
  * 
  * 
  * @author Chris Tisdale
@@ -26,18 +26,32 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *      <ul> 
  *          <li> 1.06a | 11/08/2016:    Implemented FileInputStreams of both sheet 0 and sheet 1 of the data.xls workbook.
  *                                      Initialized and populated two 2d String arrays roadData and nodeData from the stream.
- *                                      Looped through the number of roads and populated array of Roads and array of TrafficSignals
+ *                                      Looped through the number of roads and populated array of roads and array of trafficSignals
  *                                          from the corresponding roadData rows.
  *                                      Looped through the number of nodes and populated appropriate array lists then entered
  *                                          these lists into array of SignalGroup.</li>
+ *          <li> 1.07a | 11/09/2016:    Changed main to runnable thread. Class changed from main to actual class. Brought variables to 
+ *                                      match standard java coding characteristics
  *      </ul>
  */
-public class ReadExcel {
-
-    public static void main(String[] args) throws IOException {
-
-        //Try catch setting up input stream
-        FileInputStream file = null;
+public class ReadExcel implements Runnable{
+    
+    private final XSSFWorkbook workbook;
+    private XSSFSheet sheet;
+    private FileInputStream file = null;
+    private TrafficSignal[] trafficSignals;     //these arrays should be replaced with ArrayLists.
+    private SignalGroup[] signalGroup;
+    private Road[] roads;
+    private ArrayList<TrafficSignal> trafficSignal = new ArrayList<>();
+    private String progress;
+    
+    protected boolean threadHasRun;
+    
+    private final int numRoads = 236;                   //EC: why is this hard coded?
+    private final int numNodes = 83;                    //EC: why is this hard coded?
+    
+    public ReadExcel() throws IOException {
+        //Try catch setting up input stream             EC: you catch this one, but throw IO?
         try {
             file = new FileInputStream(new File("data.xlsx"));
         } catch (FileNotFoundException ex) {
@@ -45,10 +59,27 @@ public class ReadExcel {
         }
 
         //Create Workbook instance holding reference to .xlsx file
-        XSSFWorkbook workbook = new XSSFWorkbook(file);
+        workbook = new XSSFWorkbook(file);
+        
+        //Initialize array of Road and array of TrafficSignal
+        roads = new Road[numRoads];
+        trafficSignals = new TrafficSignal[numRoads];
+        
+        //Initialize array of SignalGroup
+        signalGroup = new SignalGroup[numNodes];
+        
+        //Set thread flag
+        threadHasRun = false;
+        
+        progress = "";
 
+    }
+
+    @Override
+    public void run(){              //this could be put in the constructor, but it is better suited as a thread so we can check progress & maintain responsiveness in the user gui
+        
         //Get first sheet from the workbook
-        XSSFSheet sheet = workbook.getSheetAt(0);
+        sheet = workbook.getSheetAt(0);
 
         //Set value of row and column and create appropriate size array roadData
         int rowNum = sheet.getLastRowNum() + 1;
@@ -86,25 +117,19 @@ public class ReadExcel {
             
         }
         
-        //Initialize array of Road and array of TrafficSignal
         //Loop through and populate array with roads
         //coords array is given to constructor in (x,y) order
-        final int numRoads = 236;
-        Road[] Roads = new Road[numRoads];
-        TrafficSignal[] TrafficSignals = new TrafficSignal[numRoads];
         int[] coords = new int[2];
         for (int i = 0; i <= numRoads-1; i++) {
             coords[0] = Integer.parseInt(roadData[i][7]);
             coords[1] = Integer.parseInt(roadData[i][8]);
             //Constructors for Road and TrafficSignal
-            Roads[i] = new Road(roadData[i][2], roadData[i][6], Double.parseDouble(roadData[i][3]), Integer.parseInt(roadData[i][4]));
-            TrafficSignals[i] = new TrafficSignal(Integer.parseInt(roadData[i][5]), Roads[i], roadData[i][0]+roadData[i][1], coords);
+            roads[i] = new Road(roadData[i][2], roadData[i][6], Double.parseDouble(roadData[i][3]), Integer.parseInt(roadData[i][4]));
+            trafficSignals[i] = new TrafficSignal(Integer.parseInt(roadData[i][5]), roads[i], roadData[i][0]+roadData[i][1], coords);
         }
        
-        //Initialize array of SignalGroup
+        
         //Loops through the number of nodes to get base node for each group
-        final int numNodes = 83;
-        SignalGroup[] SignalGroup = new SignalGroup[numNodes];
         for (int i = 0; i <= numNodes-1; i++) {
             String tempNode = nodeData[i][0];       //get target node from nodeData array
             ArrayList<TrafficSignal> exitTemp = new ArrayList<>();
@@ -114,15 +139,14 @@ public class ReadExcel {
             //Those that start with same ID as the node are added as exits
             //Thise that end with same ID as the node are added as entering traffic signals
             for (int j = 0; j <= numRoads-1; j++) {
-                if (TrafficSignals[j].getIdentifier().startsWith(tempNode))
-                    exitTemp.add(TrafficSignals[j]);
-                if (TrafficSignals[j].getIdentifier().endsWith(tempNode))
-                    signalTemp.add(TrafficSignals[j]);       
+                if (trafficSignals[j].getIdentifier().startsWith(tempNode))
+                    exitTemp.add(trafficSignals[j]);
+                if (trafficSignals[j].getIdentifier().endsWith(tempNode))
+                    signalTemp.add(trafficSignals[j]);       
             }
             
             //Initialize an ArrayList called trafficSignal and copy signalTemp (the signals at that node)
             //used to populate signalOrder to pass operation order to constructor
-            ArrayList<TrafficSignal> trafficSignal = new ArrayList<>();
             trafficSignal = signalTemp;
             
             //Create arrays for tracking order of signals since there are no more than two types of signals per node
@@ -167,8 +191,8 @@ public class ReadExcel {
             TrafficSignal[] b2 = new TrafficSignal[2];
 
             //the next 100 lines copy tempSignalA and B arrays to an array of appropriate length through tempSignalSize variables
-            if (tempSignalASize == 1 && tempSignalBSize == 0){
-                a1[0] = tempSignalA[0];
+            if (tempSignalASize == 1 && tempSignalBSize == 0){      //EC:   configure all of these to if-else, otherwise it will check all everytime.
+                a1[0] = tempSignalA[0];                             //      which will add uneccessary runtime. Maybe think of a better way to do this.
                 signalOrder.add(a1);
             }
             
@@ -278,9 +302,52 @@ public class ReadExcel {
                 signalOrder.add(tempSignalB);
             }
             //Constructor for SignalGroup
-            SignalGroup[i] = new SignalGroup(exitTemp, signalTemp, signalOrder);
+            signalGroup[i] = new SignalGroup(exitTemp, signalTemp, signalOrder);
         }
         
-    file.close();
+        try {
+            file.close();
+        } catch (IOException ex) {
+            Logger.getLogger(ReadExcel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        threadHasRun = true;
+    }
+    
+    //EC: I need these methods to be created.
+    public static double getRoadLength(String nextRoad) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public static double getRoadSpeed(String nextRoad) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    /**
+     * This will return a map created from the XLSX document. 
+     * @return A map created from the XLSX document. This can only be called after this thread has been run, otherwise it will fail.
+     * @since 1.07a
+     */
+    public Map getMap(){
+        if(threadHasRun){
+            ArrayList<SignalGroup> sGroups = new ArrayList();
+            for(int x = 0; x<signalGroup.length; x++){
+                sGroups.add(signalGroup[x]);
+            }
+            return new Map(sGroups, trafficSignal); //EC: this needs to be replaced with the correct traffic signal AL from a class level
+        }
+        return null;
+    }
+
+    public String getProgress() {
+        return progress;
+    }
+    
+    /**
+     * This method will be used to write the completed cars to the excel for later use.
+     * @param outCar 
+     */
+    public void writeACar(Car outCar){
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
