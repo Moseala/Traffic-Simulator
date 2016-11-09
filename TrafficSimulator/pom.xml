@@ -13,7 +13,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mainClass>com.mycompany.trafficsimulator.MainApp</mainClass>
     </properties>
-
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>3.11</version>
+        </dependency>
+    </dependencies>
     <organization>
         <!-- Used as the 'Vendor' for JNLP generation -->
         <name>Your Organisation</name>

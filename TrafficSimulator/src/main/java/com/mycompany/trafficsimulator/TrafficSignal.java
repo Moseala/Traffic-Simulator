@@ -101,10 +101,24 @@ import java.util.Queue;
      * @author Erik Clary
      * @since 1.01a
      */
-    public String getIdentifier(){
-        return identifier;
-    }
-    
+        public String getIdentifier() {
+            return identifier;
+        }
+
+
+    /**
+     * getSignalType method returns the signal attached to this
+     * TrafficSignal
+     *
+     * @return an integer that is the signal type unique to this
+     * TrafficSignal
+     * @author Chris Tisdale
+     * @since 1.06a
+    */
+        public int getSignalType() {
+            return signalType;
+        }
+        
     /**
      * equals compares two traffic signals, true if equal, false if they are not
      * this method compares the unique identifiers attached to the signal.
@@ -274,4 +288,5 @@ import java.util.Queue;
         double y = Math.pow(t1.getCoordinates()[1]-t.getCoordinates()[1], 2);
         return (int)Math.sqrt(x+y);
     }
+
 }

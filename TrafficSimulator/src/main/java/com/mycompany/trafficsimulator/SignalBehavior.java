@@ -17,7 +17,10 @@ class SignalBehavior {
     public final int signalType;
     public final int DESPAWNER = 0;
     public final int PASSTHROUGH = 1;
-    public final int REGULAR = 2;
+    public final int STOPSIGN = 2;          //releases a car every 2 sec (this is only at T intersections so there are no 4-way stop signs)
+    public final int TRAFFICLIGHTA = 3;     //green for 96 sec
+    public final int TRAFFICLIGHTB = 4;     //green for 36 sec
+    public final int TRAFFICLIGHTC = 5;     //green for 24 sec
     
     public SignalBehavior(int signalType) {
         this.signalType = signalType;
