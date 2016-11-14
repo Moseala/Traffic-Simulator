@@ -35,7 +35,11 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *                                      Looped through the number of nodes and populated appropriate array lists then entered
  *                                          these lists into array of SignalGroup.</li>
  *          <li> 1.07a | 11/09/2016:    Changed main to runnable thread. Class changed from main to actual class. Brought variables to 
- *                                      match standard java coding characteristics
+ *                                      match standard java coding characteristics</li>
+ *          <li> 1.07a | 11/14/2016:    Changed array of roads, traffic signals, and signal groups to array lists.
+ *                                      Cleaned up logic for setting signal order.
+ *                                      Added deepClone, getRoadLength, getRoadSpeed methods.
+ *                                      match standard java coding characteristics</li>
  *      </ul>
  */
 public class ReadExcel implements Runnable{
