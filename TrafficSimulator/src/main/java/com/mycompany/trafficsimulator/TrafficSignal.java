@@ -119,6 +119,18 @@ import java.util.Queue;
             return signalType;
         }
         
+     /**
+     * getSourceRoad method returns the road attached to this
+     * TrafficSignal
+     *
+     * @return a road that is unique to this TrafficSignal
+     * @author Chris Tisdale
+     * @since 1.07a
+    */
+        public Road getSourceRoad() {
+            return sourceRoad;
+        }
+        
     /**
      * equals compares two traffic signals, true if equal, false if they are not
      * this method compares the unique identifiers attached to the signal.
