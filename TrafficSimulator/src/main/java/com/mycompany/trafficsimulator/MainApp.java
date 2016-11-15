@@ -65,7 +65,7 @@ public class MainApp extends Application {
         Queue carQueue = new LinkedList();
         Random rand = new Random(seed);
         //create read from xlsx to check to see how many cars are already within.
-        for(int x = 0; x<createdMap.getTotalCarsNeeded(); x++){
+        for(int x = 0; x<5000/*createdMap.getTotalCarsNeeded()*/; x++){
             Car newCar = new Car(Car.REGULAR_CAR,directions.getDirections(createdMap, createdMap.getRandomPoint(rand), createdMap.getRandomPoint(rand)));
             carQueue.add(newCar);
             System.out.println("Created car: " +x + " of " +createdMap.getTotalCarsNeeded());

@@ -104,7 +104,7 @@ public class Map implements Runnable{
                     }
                     else{
                         if(verifyNextDirection(nextQueue,e)){ 
-                            findTrafficSignal(nextQueue,0,signals.size()).addCar(outCar); //adds the car to its next destination traffic signal
+                            findTrafficSignal(nextQueue,0,signals.size()-1).addCar(outCar); //adds the car to its next destination traffic signal
                         }
                         else{
                             Logger.logMsg(0, "Car " + outCar +" does not have a good next path.");
@@ -161,7 +161,7 @@ public class Map implements Runnable{
         for(int x = 0; x<carCurve(currentMoment); x++){
             Car spawned = spawnCars.poll();
             actors.addFirst(spawned); //this adds the car to the stage(actor queue)
-            findTrafficSignal(spawned.passContinueSignal(),0,signals.size()).addCar(spawned); //this adds the car to its spawner traffic signal.
+            findTrafficSignal(spawned.passContinueSignal(),0,signals.size()-1).addCar(spawned); //this adds the car to its spawner traffic signal.
         }
     }
 
@@ -201,12 +201,12 @@ public class Map implements Runnable{
     private TrafficSignal findTrafficSignal(String identifier, int begin, int end){//needs to be tested
         if(begin<=end){
             int mid = ((end-begin)/2)+begin; //midpoint
-            int compared = signals.get(mid).compareTo(end);
+            int compared = signals.get(mid).compareTo(signals.get(end));
             if(compared ==0) //completed escape
                 return signals.get(mid); 
-            if(compared < 0)
-                return findTrafficSignal(identifier,begin,mid-1);
             if(compared > 0)
+                return findTrafficSignal(identifier,begin,mid-1);
+            if(compared < 0)
                 return findTrafficSignal(identifier,mid+1,end);
         }
         return null;

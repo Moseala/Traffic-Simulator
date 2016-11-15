@@ -27,11 +27,17 @@ class SignalBehavior {
     }
     
     public int timeToFunction(){
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        switch(signalType){
+            case STOPSIGN: return 2;
+            case TRAFFICLIGHTA: return 96;
+            case TRAFFICLIGHTB: return 36;
+            case TRAFFICLIGHTC: return 24;
+            default: return 1;
+        }
     }
 
     public int getCarAmountToRelease() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return 1;
     }
     
 }
