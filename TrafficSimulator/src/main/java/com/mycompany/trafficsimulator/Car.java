@@ -18,7 +18,8 @@ import java.util.Queue;
  *          <li> 1.02a | 10/26/2016: Added actor implement, and changed act
  *                                      method to match the interface's requirements.</li>
  *          <li> 1.05a | 11/07/2016: Added missing javadoc, added getTimeAlive method for metrics.</li>
- *          <li> 1.07a | 11/09/2016: Added start/end points, needs to be finished.
+ *          <li> 1.07a | 11/09/2016: Added start/end points, needs to be finished.</li>
+ *          <li> 1.08a | 11/14/2016: Added functionality for Chris' change from string finding on traffic signals to passing the object (implements serializable)</li>
  *      </ul>
  */
 public class Car implements Actor{
@@ -29,7 +30,7 @@ public class Car implements Actor{
     public static final int REGULAR_CAR = 0;
     
     private double timeAlive; //this should be in seconds.
-    private Queue<String> directions; //directions MUST BE UNIQUE TRAFFIC SIGNAL IDs otherwise map's transfer algo will die.
+    private Queue<TrafficSignal> directions; //directions MUST BE UNIQUE TRAFFIC SIGNALS otherwise map's transfer algo will die.
     private final int carType;
     private double timeRemainingOnCurrentRoad;
     private int carStatus;
@@ -45,7 +46,7 @@ public class Car implements Actor{
      * @author Erik Clary
      * @since 1.00a
      */
-    public Car(int CAR_TYPE, Queue<String> directions){
+    public Car(int CAR_TYPE, Queue<TrafficSignal> directions){
         timeAlive = 0;
         this.directions = directions;
         carType = CAR_TYPE;
@@ -61,15 +62,15 @@ public class Car implements Actor{
      * @since 1.00a
      */
     public String passContinueSignal(){
-        String nextRoad = directions.poll();
+        TrafficSignal nextRoad = directions.poll();
         carStatus = TRAVELLING;
         timeRemainingOnCurrentRoad = CarBehavior.getTime(carType, nextRoad);
-        return nextRoad;
+        return nextRoad.getIdentifier();
     }
 
     /**
      * This method returns the amount of time the car has been alive for.
-     * @return Time this car has been alive for as double.
+     * @return Time this car has been alive for [as double].
      * @since 1.05a
      */
     public double getAliveTime(){

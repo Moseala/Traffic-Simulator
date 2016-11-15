@@ -1,5 +1,7 @@
 package com.mycompany.trafficsimulator;
 
+import java.io.Serializable;
+
 /**
  * Road class is an object to be used to encapsulate a road's name, distance, direction, and speed limit
  * 
@@ -12,9 +14,10 @@ package com.mycompany.trafficsimulator;
  * <p> <b>Version Comments:</b> 
  *      <ul> 
  *          <li> 1.01a | 10/25/2016: Initial commit </li> 
+ *          <li> 1.08a | 11/14/2016: Added functionality for Chris' change in ReadExcel (implements serializable)</li>
  *      </ul>
  */
-public class Road {
+public class Road implements Serializable{
     private final String roadName;
     private final String roadDirection;
     private final double distance;

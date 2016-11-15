@@ -18,11 +18,12 @@ import java.util.Random;
  * <p> <b>Date Created: </b>November 1, 2016 
  * <p> <b>Version Comments:</b> 
  *      <ul> 
- *          <li> 1.03a | 11/1/2016: Initial commit </li> 
- *          <li> 1.04a | 11/2/2016: Added supporting methods, run, and made Map a runnable </li> 
- *          <li> 1.05a | 11/7/2016: Added javadoc, finished map's execution logic, added metric pull methods</li>
- *          <li> 1.07a | 11/9/2016: Added supporting methods getTotalCarsNeeded and getRandomPoint for use in creation logic.
- *                                  Shifted the addition of cars to the queue outside of the constructor into its own method.</li>
+ *          <li> 1.03a | 11/01/2016:    Initial commit </li> 
+ *          <li> 1.04a | 11/02/2016:    Added supporting methods, run, and made Map a runnable </li> 
+ *          <li> 1.05a | 11/07/2016:    Added javadoc, finished map's execution logic, added metric pull methods</li>
+ *          <li> 1.07a | 11/09/2016:    Added supporting methods getTotalCarsNeeded and getRandomPoint for use in creation logic.
+ *                                      Shifted the addition of cars to the queue outside of the constructor into its own method.</li>
+ *          <li> 1.08a | 11/14/2016:    Changed car curve equation to something more managable for testing. **on average needs to be around 63,000</li>
  *      </ul>
  */
 public class Map implements Runnable{
@@ -35,9 +36,9 @@ public class Map implements Runnable{
     
     //these are the variables for the car creation curve. abs(sin(PERIOD*x))*AMPLITUDE
     private final int TIMETORUN = 43200; //this is the amount of seconds for this method to run. Default = 43200 (12 hrs)
-    private final double AMPLITUDE = 15; //peak number of cars to enter (cars per second)
+    private final double AMPLITUDE = 1; //peak number of cars to enter (cars per second)
     private final double PERIOD = (2*Math.PI)/TIMETORUN; //this has a period of 12 hrs, with peaks at 1/4 and 3/4 of the time (9 and 15)hrs
-    private final double ySHIFT = 3; //this is the base car amount (amount of cars to add each second no matter what)
+    private final double ySHIFT = 1; //this is the base car amount (amount of cars to add each second no matter what)
     
     /**
      *  This is the constructor for Map. It requires two array lists, containing the signal groups and traffic signals in the map.

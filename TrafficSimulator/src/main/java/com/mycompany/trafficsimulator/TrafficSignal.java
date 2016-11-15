@@ -1,8 +1,10 @@
 package com.mycompany.trafficsimulator;
 
 import com.sun.media.jfxmedia.logging.Logger;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.Queue;
 
 /**
@@ -27,9 +29,10 @@ import java.util.Queue;
  *          <li> 1.05a | 11/07/2016:    Added missing javadoc, and @since tags.
  *                                      Implemented Comparator, and added required methods.
  *                                      Added overriding .equals for compatibility with ArrayList.contains</li>
+ *          <li> 1.08a | 11/14/2016:    Added functionality for Chris' change from string finding on traffic signals to passing the object (implements serializable)</li>
  *      </ul>
  */
-    public class TrafficSignal implements Actor, Comparable, Comparator<TrafficSignal>{
+    public class TrafficSignal implements Actor, Comparable, Comparator<TrafficSignal>, Serializable{
     private final int signalType;
     private Queue<Car> carQueue;
     private ArrayList<Car> roadCars;
@@ -51,13 +54,16 @@ import java.util.Queue;
      * @author Erik Clary
      * @since 1.00a
      */
-    public TrafficSignal(int SIGNAL_TYPE, Road feedingRoad, String uniqueIdentifier, int[] coordinates){
+    public TrafficSignal(int SIGNAL_TYPE, Road feedingRoad, String uniqueIdentifier, int[] coordinates) {
         this.signalType = SIGNAL_TYPE;
         sourceRoad = feedingRoad;
         identifier = uniqueIdentifier;
         lightActive = false;
         outGoingCars = new ArrayList(); // should find a better way do to outgoing cars via passing them directly to signal group actor
         this.coordinates = coordinates;
+        carQueue = new LinkedList();
+        roadCars = new ArrayList();
+        outGoingCars = new ArrayList();
     }
     
     /**

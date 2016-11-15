@@ -12,14 +12,15 @@ package com.mycompany.trafficsimulator;
  *      <ul> 
  *          <li> 1.02a | 10/26/2016: Initial commit </li> 
  *          <li> 1.05a | 11/07/2016: Added getTime method skeleton, incomplete.</li>
- *          <li> 1.07a | 11/09/2016: Deleted uneccesary return from getTime
+ *          <li> 1.07a | 11/09/2016: Deleted uneccesary return from getTime</li>
+ *          <li> 1.08a | 11/14/2016: Added functionality for Chris' change from string finding on traffic signals to passing the object</li>
  *      </ul>
  */
 public class CarBehavior {
     //these are the final car type enums, more can be added.
     public final int REGULAR = 0;
 
-    static double getTime(int carType, String nextRoad) {
+    static double getTime(int carType, TrafficSignal nextRoad) {
         double length = ReadExcel.getRoadLength(nextRoad); //to be implemented with commit of xlsx class
         double speed = ReadExcel.getRoadSpeed(nextRoad);//to be implemented with commit of xlsx class
         switch(carType){

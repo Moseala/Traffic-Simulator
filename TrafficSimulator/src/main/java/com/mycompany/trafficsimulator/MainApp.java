@@ -40,7 +40,7 @@ public class MainApp extends Application {
      * @param args the command line arguments
      */
     public static void main(String[] args) throws InterruptedException {
-        launch(args);
+        //launch(args);
         
         //Read excel doc and build its lists& queues.
         ReadExcel creator;
@@ -50,22 +50,28 @@ public class MainApp extends Application {
             Logger.getLogger(MainApp.class.getName()).log(Level.SEVERE, null, ex);
             return;
         }
+        creator.run();
+        /*
         Thread creationThread = new Thread(creator);
         creationThread.start();
         while(creationThread.isAlive()){
             System.out.println("XLSX Progress: " + creator.getProgress());
             Thread.sleep(10000); //test to make sure this doesnt delay the created thread.
-        }
-        
+        }*/
+        System.out.println("Starting Map Generation.");
         //build map and cars from the read excel document
         Map createdMap = creator.getMap();
         DirectionCreation directions = new DirectionCreation(seed);
         Queue carQueue = new LinkedList();
         Random rand = new Random(seed);
+        //create read from xlsx to check to see how many cars are already within.
         for(int x = 0; x<createdMap.getTotalCarsNeeded(); x++){
             Car newCar = new Car(Car.REGULAR_CAR,directions.getDirections(createdMap, createdMap.getRandomPoint(rand), createdMap.getRandomPoint(rand)));
             carQueue.add(newCar);
+            System.out.println("Created car: " +x + " of " +createdMap.getTotalCarsNeeded());
         }
+        //need to write this to xlsx to enhance runtime.
+        //maybe thread the above?
         //add cars to the map
         createdMap.addInitialCars(carQueue);
         
