@@ -79,8 +79,9 @@ public class MainApp extends Application {
         Thread mapThread = new Thread(createdMap);
         mapThread.start();
         while(mapThread.isAlive()){
-            System.out.println("Map Progress: " + createdMap.getProgress());
-            Thread.sleep(10000);
+            System.out.println("Map Progress:       " + createdMap.getProgress());
+            System.out.println("Actors in System:   " + createdMap.actorsInSystem());
+            Thread.sleep(1000);
         }
         
         //Mapthread is now finished, dump despawned cars back to xlsx for metrics.

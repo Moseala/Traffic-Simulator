@@ -73,6 +73,10 @@ public class Map implements Runnable{
         Collections.sort(signals);
     }
     
+    public int actorsInSystem(){
+        return actors.size();
+    }
+    
     /**
      * This is map's run method.  
      * Logic: For each second of the simulation do the following:
@@ -101,6 +105,7 @@ public class Map implements Runnable{
                     if(nextQueue == null){ // a null nextQueue indicates the car has reached its destination.
                         despawnedCars.add(outCar);
                         actors.remove(outCar); //needs to be tested
+                        System.out.println("A car has exited the System!");
                     }
                     else{
                         if(verifyNextDirection(nextQueue,e)){ 
@@ -156,7 +161,7 @@ public class Map implements Runnable{
      */
     private void addCars(int currentMoment){
         if(spawnCars.peek()==null){
-            requestMoreCars();
+            requestMoreCars(carCurve(currentMoment));
         }
         for(int x = 0; x<carCurve(currentMoment); x++){
             Car spawned = spawnCars.poll();
@@ -167,10 +172,18 @@ public class Map implements Runnable{
 
     /**
      * This method will poll the XML/main for more cars to add to the feeder queue.
+     * @param amount        The amount of cars you want to add
      * @since 1.04a
      */
-    private void requestMoreCars() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    private void requestMoreCars(int amount) {
+        int rng = 12345;
+        DirectionCreation directions = new DirectionCreation(rng);
+        Random rand = new Random(rng);
+        for(int x = 0; x<amount; x++){
+            Car newCar = new Car(Car.REGULAR_CAR,directions.getDirections(this, this.getRandomPoint(rand), this.getRandomPoint(rand)));
+            spawnCars.add(newCar);
+            //System.out.println("Created additional car: " + x + " of " + amount);
+        }
     }
 
     /**

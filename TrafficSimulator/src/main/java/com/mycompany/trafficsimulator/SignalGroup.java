@@ -68,7 +68,7 @@ public class SignalGroup implements Actor{
      */
     public void act(){ 
         if(readyForNextOperation){ //after initialization, this flag will be true, so it will increment operation iterator to 0.
-            if(++operationIterator > operationOrder.size())
+            if(++operationIterator > operationOrder.size()-1)
                 operationIterator = 0;
             signalTimeArray = new int[operationOrder.get(operationIterator).length]; //creates an array the same size as the concurrent traffic signals
             for(int i = 0; i<signalTimeArray.length; i++){

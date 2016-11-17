@@ -25,6 +25,7 @@ import java.util.Random;
  */
 public class DirectionCreation {
     private final Random rng;
+    private final int MAXDIRECTIONLENGTH = 12;
     
     /**
      * Constructor for this class, accepts a seed for the Random
@@ -68,7 +69,7 @@ public class DirectionCreation {
                 directions.add(endPoint);
                 return directions;
             }
-            if(directions.size() > 30){ //if the car has a queue of over 30, end the search and make the directions final.
+            if(directions.size() > MAXDIRECTIONLENGTH){ //if the car has a queue of over 30, end the search and make the directions final.
                 return directions;
             }
             if(exits.size()-1 <0){ // in the case that the algorithm encounters a signal group that had no exits, this becomes the final point
@@ -86,7 +87,6 @@ public class DirectionCreation {
                     currentPoint = exits.get(decision);
             }
             directions.add(currentPoint);
-            System.out.println("\tCar steps: " + directions.size());
         }
         
         return directions;

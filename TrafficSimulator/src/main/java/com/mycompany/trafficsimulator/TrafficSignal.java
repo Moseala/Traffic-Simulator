@@ -197,13 +197,21 @@ import java.util.Queue;
     @Override
     public void act() {
         //Step 1: add all cars on road 
+        while(!roadCars.isEmpty()){
+            if(roadCars.get(0).getCarStatus() == Car.WAITING_TO_ENTER_SIGNAL_QUEUE){
+                carQueue.add(roadCars.get(0));
+                roadCars.get(0).carAddedToSignal();
+                roadCars.remove(0);// this needs to be tested to ensure that the car is removed correctly
+            }
+        }
+        /* java.util.ConcurrentModificationException solution 1
         for(Car feeder: roadCars){
             if(feeder.getCarStatus() == Car.WAITING_TO_ENTER_SIGNAL_QUEUE){
                 carQueue.add(feeder);
                 feeder.carAddedToSignal();
                 roadCars.remove(feeder);// this needs to be tested to ensure that the car is removed correctly
             }
-        }
+        }*/
         //Step 2: Check to see if signal is active: if so, then dequeue a car on tick, add to outgoing array, then sets light to false.
         if(lightActive){
             for(int i = 0; i< this.getBehavior().getCarAmountToRelease(); i++){
