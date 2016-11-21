@@ -27,9 +27,10 @@ public class SignalGroup implements Actor{
     private final ArrayList<TrafficSignal> exitRoads;
     private final ArrayList<TrafficSignal> trafficSignals;
     private final ArrayList<TrafficSignal[]> operationOrder; //the order of the array list is the order 
-                                             //that the signals operate, the TrafficSignal[] stored 
-                                             //at each index are simultanious signals, so anything 
-                                             //contained here is operated simultaniously.
+                                                            //that the signals operate, the TrafficSignal[] stored 
+                                                            //at each index are simultanious signals, so anything 
+                                                            //contained here is operated simultaniously.
+    private ArrayList<TrafficSignal> signalsOnThisTick;
     /**
      * Constructor for this class. 
      * 
@@ -46,6 +47,7 @@ public class SignalGroup implements Actor{
         this.operationOrder = operationOrder;
         operationIterator = -1;
         readyForNextOperation = true;
+        signalsOnThisTick = new ArrayList();
     }   
     /**
      * act works through these steps: 
@@ -81,13 +83,17 @@ public class SignalGroup implements Actor{
         else{
             for(int i = 0; i<signalTimeArray.length; i++){
                 if(signalTimeArray[i]-->0){
-                    operationOrder.get(operationIterator)[i].thisSignalOn();
+                    signalsOnThisTick.add(operationOrder.get(operationIterator)[i]);
                 }
             }
         }
         
     }
 
+    public ArrayList<TrafficSignal> getSignalsOn(){
+        return signalsOnThisTick;
+    }
+    
     /**
      * this method returns true if all times in the array are depleted (all elements are <=0), otherwise
      * returns false.

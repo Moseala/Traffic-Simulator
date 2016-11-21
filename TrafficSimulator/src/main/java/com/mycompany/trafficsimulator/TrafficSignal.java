@@ -63,7 +63,6 @@ import java.util.Queue;
         this.coordinates = coordinates;
         carQueue = new LinkedList();
         roadCars = new ArrayList();
-        outGoingCars = new ArrayList();
     }
     
     /**
@@ -197,12 +196,16 @@ import java.util.Queue;
     @Override
     public void act() {
         //Step 1: add all cars on road 
-        while(!roadCars.isEmpty()){
-            if(roadCars.get(0).getCarStatus() == Car.WAITING_TO_ENTER_SIGNAL_QUEUE){
-                carQueue.add(roadCars.get(0));
-                roadCars.get(0).carAddedToSignal();
-                roadCars.remove(0);// this needs to be tested to ensure that the car is removed correctly
+        // infinite logic error
+        int carRoadIter = 0;
+        while(!roadCars.isEmpty() && carRoadIter < roadCars.size()){ //while the roadCars has cars and the iterator has not gone through all of them
+            if(roadCars.get(carRoadIter).getCarStatus() == Car.WAITING_TO_ENTER_SIGNAL_QUEUE){
+                roadCars.get(carRoadIter).carAddedToSignal();
+                carQueue.add(roadCars.get(carRoadIter));
+                roadCars.remove(carRoadIter);// this needs to be tested to ensure that the car is removed correctly
             }
+            else
+                carRoadIter++;
         }
         /* java.util.ConcurrentModificationException solution 1
         for(Car feeder: roadCars){
@@ -214,8 +217,11 @@ import java.util.Queue;
         }*/
         //Step 2: Check to see if signal is active: if so, then dequeue a car on tick, add to outgoing array, then sets light to false.
         if(lightActive){
-            for(int i = 0; i< this.getBehavior().getCarAmountToRelease(); i++){
-                outGoingCars.add(carQueue.poll());
+            if(!carQueue.isEmpty()){
+                //System.out.println("Light " + identifier + "is releasing a car."); //debug
+                for(int i = 0; i< this.getBehavior().getCarAmountToRelease(); i++){
+                    outGoingCars.add(carQueue.poll());
+                }
             }
             lightActive = false;
         }

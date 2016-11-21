@@ -1,5 +1,6 @@
 package com.mycompany.trafficsimulator;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -121,8 +122,8 @@ public class MainApp extends Application {
     }
 
     
-//Get all of the Output
-public ObservableList<Output> getOutput()
+    //Get all of the Output
+    public ObservableList<Output> getOutput()
         {
             ObservableList<Output> output = FXCollections.observableArrayList();
             output.add(new Output("Killeen Airport", 3, 3, 4));
@@ -137,8 +138,6 @@ public ObservableList<Output> getOutput()
      *
      * @param args the command line arguments
      */
-
-
     public static void main(String[] args) throws InterruptedException {
         //launch(args);
         
@@ -162,18 +161,46 @@ public ObservableList<Output> getOutput()
         //build map and cars from the read excel document
         Map createdMap = creator.getMap();
         DirectionCreation directions = new DirectionCreation(seed);
-        Queue carQueue = new LinkedList();
+        Queue<Car> carQueue = new LinkedList();
         Random rand = new Random(seed);
+        
         //create read from xlsx to check to see how many cars are already within.
-        for(int x = 0; x<5000/*createdMap.getTotalCarsNeeded()*/; x++){
+        /*
+        if(creator.getNumCars() != createdMap.getTotalCarsNeeded()){
+            for(int x = 0; x<(createdMap.getTotalCarsNeeded()-creator.getNumCars()); x++){
+                try{
+                    Car newCar = new Car(Car.REGULAR_CAR,directions.getDirections(createdMap, createdMap.getRandomPoint(rand), createdMap.getRandomPoint(rand)));
+                    creator.writeACar(newCar);
+                    System.out.println("Created car: " +x + " of " +createdMap.getTotalCarsNeeded());
+                }
+                catch(IOException ex){
+                    Logger.getLogger(MainApp.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+        
+        for(int x = 0; x<createdMap.getTotalCarsNeeded(); x++){
+            try{
+                carQueue.add(creator.readACar());
+            }
+            catch(IOException ex){
+                Logger.getLogger(MainApp.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }*/
+        
+        for(int x = 0; x<500/*createdMap.getTotalCarsNeeded()*/; x++){
             Car newCar = new Car(Car.REGULAR_CAR,directions.getDirections(createdMap, createdMap.getRandomPoint(rand), createdMap.getRandomPoint(rand)));
             carQueue.add(newCar);
             System.out.println("Created car: " +x + " of " +createdMap.getTotalCarsNeeded());
         }
+        
+        
         //need to write this to xlsx to enhance runtime.
         //maybe thread the above?
         //add cars to the map
         createdMap.addInitialCars(carQueue);
+        
+        //createdMap.run(); //Debug run
         
         //now the map has everything needed to run. execute map's runtime in a new thread
         Thread mapThread = new Thread(createdMap);
@@ -181,15 +208,24 @@ public ObservableList<Output> getOutput()
         while(mapThread.isAlive()){
             System.out.println("Map Progress:       " + createdMap.getProgress());
             System.out.println("Actors in System:   " + createdMap.actorsInSystem());
+            //System.out.println("Cars finished:      " + createdMap.getDespawnedCars().size());
             Thread.sleep(1000);
         }
         
         //Mapthread is now finished, dump despawned cars back to xlsx for metrics.
+        System.out.println("Finished!");
         ArrayList<Car> despawned = createdMap.getDespawnedCars();
-        for(Car e: despawned){
-            creator.writeACar(e);
-        }
+        System.out.println("Despawned: " + despawned.size());
+        /*for(Car e: despawned){
+            try {
+                creator.writeACar(e);
+            } catch (IOException ex) {
+                Logger.getLogger(MainApp.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }*/
+     
         
+        System.exit(0);
     }
 
 }

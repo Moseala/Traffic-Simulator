@@ -22,7 +22,7 @@ import java.util.Queue;
  *          <li> 1.08a | 11/14/2016: Added functionality for Chris' change from string finding on traffic signals to passing the object (implements serializable)</li>
  *      </ul>
  */
-public class Car implements Actor{
+public class Car implements Actor, Runnable{
     public static final int WAITING_AT_SIGNAL = 0;
     public static final int TRAVELLING = 1;
     public static final int WAITING_TO_ENTER_SIGNAL_QUEUE = 2;
@@ -36,6 +36,7 @@ public class Car implements Actor{
     private int carStatus;
     private String startPoint;
     private String endPoint;
+    private String id;
     
     /**
      * Constructor for car object, car status defaults to WAITING_TO_ENTER_SIGNAL_QUEUE, as it should be waiting to be spawned.
@@ -51,6 +52,7 @@ public class Car implements Actor{
         this.directions = directions;
         carType = CAR_TYPE;
         carStatus = WAITING_TO_ENTER_SIGNAL_QUEUE;
+        id = "" +carType + "--" + directions.peek().getIdentifier();
     }
     
     /**
@@ -62,10 +64,16 @@ public class Car implements Actor{
      * @since 1.00a
      */
     public String passContinueSignal(){
-        TrafficSignal nextRoad = directions.poll();
-        carStatus = TRAVELLING;
-        timeRemainingOnCurrentRoad = CarBehavior.getTime(carType, nextRoad);
-        return nextRoad.getIdentifier();
+        try{
+            //System.out.println("Car " + id + " has " + directions.size()+ " directions"); //debug
+            TrafficSignal nextRoad = directions.poll();
+            carStatus = TRAVELLING;
+            timeRemainingOnCurrentRoad = CarBehavior.getTime(carType, nextRoad);
+            return nextRoad.getIdentifier();
+        }
+        catch(NullPointerException e){
+            return null;
+        }
     }
 
     /**
@@ -87,6 +95,10 @@ public class Car implements Actor{
      */
     public int getCarStatus(){
         return carStatus;
+    }
+    
+    public String getCarID(){
+        return id;
     }
     
     /**
@@ -120,5 +132,10 @@ public class Car implements Actor{
             carStatus = WAITING_TO_ENTER_SIGNAL_QUEUE;
             return;
         }
+    }
+
+    @Override
+    public void run() {
+        act();
     }
 }

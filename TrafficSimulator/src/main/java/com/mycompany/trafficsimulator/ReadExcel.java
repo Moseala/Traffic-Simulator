@@ -380,7 +380,7 @@ public class ReadExcel implements Runnable{
      * @author Chris Tisdale
      * @since 1.08a
      */
-    public void writeACar(Car outCar) throws FileNotFoundException, IOException {
+    public void writeACar(Car outCar) throws FileNotFoundException, IOException { //EC: this writes garbage data... unsure why.
         DataFormatter formatter;
         formatter = new DataFormatter();
         sheet = workbook.getSheetAt(3);
@@ -424,7 +424,7 @@ public class ReadExcel implements Runnable{
      * @author Chris Tisdale
      * @since 1.08a
      */    
-    public int readACar () throws IOException{
+    public int readACar () throws IOException{      //EC: why does this return an int? cast to Car before returning.
         DataFormatter formatter;
         formatter = new DataFormatter();
         sheet = workbook.getSheetAt(2);
@@ -472,7 +472,7 @@ public class ReadExcel implements Runnable{
      * @since 1.08a
      */
     public int getNumCars() {
-        sheet = workbook.getSheetAt(2);
+        sheet = workbook.getSheetAt(2);     
         int rowNum = sheet.getLastRowNum();
         return rowNum;
     }

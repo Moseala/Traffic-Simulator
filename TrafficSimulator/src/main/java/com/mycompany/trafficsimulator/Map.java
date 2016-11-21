@@ -6,6 +6,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The Map class contains all the actors for the Traffic Simulation. It also contains the 
@@ -27,12 +30,14 @@ import java.util.Random;
  *      </ul>
  */
 public class Map implements Runnable{
-    private LinkedList<Actor> actors = new LinkedList(); //this cannot be final, actors are removed and added.
     private final ArrayList<SignalGroup> nodes;
     private final ArrayList<TrafficSignal> signals;
+    private ArrayList<Car> runningCars;
     private Queue<Car> spawnCars;       //this cannot be final, it is added to on empty poll.
     private ArrayList<Car> despawnedCars;
     private int currentRunningSecond = 0;
+    private int rng = 12345;
+    private Random rand = new Random(rng);
     
     //these are the variables for the car creation curve. abs(sin(PERIOD*x))*AMPLITUDE
     private final int TIMETORUN = 43200; //this is the amount of seconds for this method to run. Default = 43200 (12 hrs)
@@ -51,14 +56,16 @@ public class Map implements Runnable{
     public Map(ArrayList<SignalGroup> signalGroups, ArrayList<TrafficSignal> trafficSignals){
         nodes = signalGroups;
         signals = trafficSignals;
+        runningCars = new ArrayList();
+        despawnedCars = new ArrayList();
         
-        //empty map starting configuration
+        /*empty map starting configuration
         for(SignalGroup e: signalGroups){
             actors.add(e);
         }
         for(TrafficSignal e: trafficSignals){
             actors.add(e);
-        }
+        }*/
         
     }
     
@@ -74,7 +81,7 @@ public class Map implements Runnable{
     }
     
     public int actorsInSystem(){
-        return actors.size();
+        return nodes.size() + signals.size() + runningCars.size();
     }
     
     /**
@@ -93,32 +100,57 @@ public class Map implements Runnable{
     @Override
     public void run() {
         for(currentRunningSecond =0; currentRunningSecond <TIMETORUN; currentRunningSecond++){
+            //System.out.println("Progress: " + getProgress()); //debug
             addCars(currentRunningSecond);
-            for(int inner = 0; inner<actors.size(); inner++){
-                actors.get(inner).act();
+            //Break actor list into cars/trafficsignals
+            ExecutorService taskExec = Executors.newCachedThreadPool();
+            for(Car e:runningCars){
+                taskExec.execute(e);
             }
+            taskExec.shutdown(); //debug, works
+            try{
+                taskExec.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            }catch(InterruptedException e){
+                System.out.println("Task await has been interrupted");
+            }
+            //finish multithread
+            
+            //group run section
+            for(SignalGroup e: nodes){
+                e.act();
+                ArrayList<TrafficSignal> activate = e.getSignalsOn();
+                for(TrafficSignal t: activate){
+                    findTrafficSignal(t.getIdentifier(),0,signals.size()-1).thisSignalOn();
+                }
+            }
+            
+            //signal run section
             for(TrafficSignal e:signals){ //this is the loop that moves the outgoing cars from their traffic signals to their new destination.
-                //if(e.getBehavior() == SignalBehavior.) This is not needed, the behavior will be decided by the traffic signal itself. always empty outgoing bins.
-                for(int outCarsIterator =0; outCarsIterator <e.getOutgoingCars().size(); outCarsIterator++){
-                    Car outCar = e.getOutgoingCars().get(outCarsIterator);
-                    String nextQueue = outCar.passContinueSignal(); //gives the car its continue flag, pull the ID NOTE: if this is null, that means despawn car
-                    if(nextQueue == null){ // a null nextQueue indicates the car has reached its destination.
-                        despawnedCars.add(outCar);
-                        actors.remove(outCar); //needs to be tested
-                        System.out.println("A car has exited the System!");
-                    }
-                    else{
-                        if(verifyNextDirection(nextQueue,e)){ 
-                            findTrafficSignal(nextQueue,0,signals.size()-1).addCar(outCar); //adds the car to its next destination traffic signal
+                e.act();
+                if(e.getOutgoingCars().size()!=0){
+                    //System.out.println("Signal " + e.getIdentifier() + " has " + e.getOutgoingCars().size() + " outgoing Cars"); //debug
+                    for(int outCarsIterator =0; outCarsIterator <e.getOutgoingCars().size(); outCarsIterator++){
+                        Car outCar = e.getOutgoingCars().get(outCarsIterator);
+                        String nextQueue = outCar.passContinueSignal(); //gives the car its continue flag, pull the ID NOTE: if this is null, that means despawn car
+                        //System.out.println("Car " + outCar.getCarID() + " is now on " + nextQueue); //debug
+                        if(nextQueue == null){ // a null nextQueue indicates the car has reached its destination.
+                            despawnedCars.add(outCar);
+                            runningCars.remove(outCar); //needs to be tested
+                            //System.out.println("A car has exited the System!"); //debug
                         }
                         else{
-                            Logger.logMsg(0, "Car " + outCar +" does not have a good next path.");
-                            despawnedCars.add(outCar);
-                            actors.remove(outCar);
+                            if(verifyNextDirection(nextQueue,e)){ 
+                                findTrafficSignal(nextQueue,0,signals.size()-1).addCar(outCar); //adds the car to its next destination traffic signal
+                            }
+                            else{
+                                System.out.println("Car " + outCar +" does not have a good next path.");
+                                despawnedCars.add(outCar);
+                                runningCars.remove(outCar);
+                            }
                         }
                     }
+                    e.clearOutGoingCars(); //clears the outGoingCars AL; 
                 }
-                e.clearOutGoingCars(); //clears the outGoingCars AL; 
             }
         }
     } 
@@ -165,7 +197,7 @@ public class Map implements Runnable{
         }
         for(int x = 0; x<carCurve(currentMoment); x++){
             Car spawned = spawnCars.poll();
-            actors.addFirst(spawned); //this adds the car to the stage(actor queue)
+            runningCars.add(spawned); //this adds the car to the stage(actor queue)
             findTrafficSignal(spawned.passContinueSignal(),0,signals.size()-1).addCar(spawned); //this adds the car to its spawner traffic signal.
         }
     }
@@ -176,11 +208,9 @@ public class Map implements Runnable{
      * @since 1.04a
      */
     private void requestMoreCars(int amount) {
-        int rng = 12345;
         DirectionCreation directions = new DirectionCreation(rng);
-        Random rand = new Random(rng);
         for(int x = 0; x<amount; x++){
-            Car newCar = new Car(Car.REGULAR_CAR,directions.getDirections(this, this.getRandomPoint(rand), this.getRandomPoint(rand)));
+            Car newCar = new Car(Car.REGULAR_CAR, directions.getDirections(this, this.getRandomPoint(rand), this.getRandomPoint(rand)));
             spawnCars.add(newCar);
             //System.out.println("Created additional car: " + x + " of " + amount);
         }
@@ -214,9 +244,10 @@ public class Map implements Runnable{
     private TrafficSignal findTrafficSignal(String identifier, int begin, int end){//needs to be tested
         if(begin<=end){
             int mid = ((end-begin)/2)+begin; //midpoint
-            int compared = signals.get(mid).compareTo(signals.get(end));
-            if(compared ==0) //completed escape
+            int compared = signals.get(mid).compareTo(identifier);
+            if(compared ==0){ //completed escape
                 return signals.get(mid); 
+            }
             if(compared > 0)
                 return findTrafficSignal(identifier,begin,mid-1);
             if(compared < 0)
