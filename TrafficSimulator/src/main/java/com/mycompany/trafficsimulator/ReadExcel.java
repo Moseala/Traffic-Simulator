@@ -402,6 +402,42 @@ public class ReadExcel implements Runnable{
         return carQueue;
     }
 
+    /**
+     * This method writes the serialized traffic signal queue to the signalQueue.txt file.
+     *
+     * @param outTrafficSignalQueue that is to be written to file.
+     * @author Chris Tisdale
+     * @since 1.08a
+     */
+    public void writeTrafficSignalQueue(Queue<TrafficSignal> outTrafficSignalQueue) {
+        try (FileOutputStream fos = new FileOutputStream("signalQueue.txt"); ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(outTrafficSignalQueue);
+            oos.close();
+        } catch (IOException ex) {
+            Logger.getLogger(ReadExcel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    /**
+     * This method reads the serialized traffic signal queue from signalQueue.txt file.
+     *
+     * @return trafficSignalQueue
+     * @throws IOException
+     * @author Chris Tisdale
+     * @since 1.08a
+     */
+    public Queue<TrafficSignal> readTrafficSignalQueue() throws IOException {
+        Queue<TrafficSignal> trafficSignalQueue = null;
+        FileInputStream fis = new FileInputStream("signalQueue.txt");
+        try (ObjectInputStream ois = new ObjectInputStream(fis)) {
+            try {
+                trafficSignalQueue = (Queue<TrafficSignal>) ois.readObject();
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(ReadExcel.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return trafficSignalQueue;
+    }
 
     /**
      * This method writes a car to the next row in the third sheet of data.xlsx
