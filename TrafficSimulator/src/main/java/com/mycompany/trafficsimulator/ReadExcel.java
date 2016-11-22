@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.poi.ss.usermodel.Cell;
@@ -364,163 +365,116 @@ public class ReadExcel implements Runnable{
         return progress;
     }
     
-    /** 
-     * This method writes a car to the next row
-     * in the third sheet of data.xlsx file.
-     * 
+    /**
+     * This method writes the serialized car queue to the carQueue.txt file.
+     *
+     * @param outCarQueue that is to be written to file.
+     * @author Chris Tisdale
+     * @since 1.08a
+     */
+    public void writeCarQueue(Queue<Car> outCarQueue) {
+        try (FileOutputStream fos = new FileOutputStream("carQueue.txt"); ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(outCarQueue);
+            oos.close();
+        } catch (IOException ex) {
+            Logger.getLogger(ReadExcel.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    /**
+     * This method reads the serialized car queue from carQueue.txt file.
+     *
+     * @return car queue.
+     * @throws IOException
+     * @author Chris Tisdale
+     * @since 1.08a
+     */
+    public Queue<Car> readCarQueue() throws IOException {
+        Queue<Car> carQueue = null;
+        FileInputStream fis = new FileInputStream("carQueue.txt");
+        try (ObjectInputStream ois = new ObjectInputStream(fis)) {
+            try {
+                carQueue = (Queue<Car>) ois.readObject();
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(ReadExcel.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return carQueue;
+    }
+
+
+    /**
+     * This method writes a car to the next row in the third sheet of data.xlsx
+     * file. In the first column it writes the destination. In the second column
+     * it writes the time alive. In the third column it writes the time waiting
+     * at stop signs. In the fourth column it writes the time waiting at traffic
+     * lights.
+     *
      * @param outCar that is to be written to file.
      * @throws FileNotFoundException
      * @throws IOException
      * @author Chris Tisdale
      * @since 1.08a
      */
-    public void writeACar(Car outCar) throws FileNotFoundException, IOException {
+    public void writeCarOutput(Car outCar) throws FileNotFoundException, IOException {
         sheet = workbook.getSheetAt(2);
-        int rowNum = sheet.getLastRowNum()+1;
-        
-        //writes car to next row
-        XSSFRow row = sheet.createRow(rowNum);
+        int rowNum = sheet.getLastRowNum();
+
+
+        //writes car output to next row
+        XSSFRow row = sheet.createRow(rowNum + 1);
         XSSFCell cell = row.getCell(0);
-        if (cell == null)
+        if (cell == null) {
             cell = row.createCell(0);
+        }
         cell.setCellType(Cell.CELL_TYPE_STRING);
-        cell.setCellValue(outCar.toString());
-        
+        cell.setCellValue(outCar.getDestination()); //these methods will need to be implemented
+
+
+        cell = row.createCell(1);
+        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+        cell.setCellValue(outCar.getTimeAlive());
+
+
+        cell = row.createCell(2);
+        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+        cell.setCellValue(outCar.getTimeAtStopSigns());
+
+
+        cell = row.createCell(3);
+        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+        cell.setCellValue(outCar.getTimeAtSignalLight());
+
+
         try (FileOutputStream fileOut = new FileOutputStream("data.xlsx")) {
             workbook.write(fileOut);
             fileOut.close();
         }
     }
 
-    /** 
-     * This method reads a car from the next row
-     * in the third sheet of data.xlsx file.
-     * 
-     * Requires that data.xlsx sheet 2 has first cell set to 1
-     * in order to track what row to read the next car from
-     * and it increments this number. 
-     * 
-     * @return car Object.
+    /**
+     * This method iterates over all the rows except for the header on the sheet
+     * that holds the written car output in data.xlsx and deletes them. This must be run at
+     * the beginning or end of the program in order to ensure that data from the
+     * previous runs are not included in the car output sheet.
+     *
      * @throws IOException
      * @author Chris Tisdale
      * @since 1.08a
-     */    
-    public Car readACar () throws IOException{
-        DataFormatter formatter;
-        formatter = new DataFormatter();
-        sheet = workbook.getSheetAt(2);
-        XSSFRow row = sheet.getRow(0);
-        XSSFCell cell = row.getCell(0);
-        String rowNumString = formatter.formatCellValue(cell); 
-        int rowNum = Integer.parseInt(rowNumString);
-        Car car = null;
-        
-        //gets next car
-        row = sheet.getRow(rowNum);
-        cell = row.getCell(0);
-        //cell.getCellValue();
-        try (FileInputStream fileIn = new FileInputStream("data.xlsx")) {
-            try (ObjectInputStream in = new ObjectInputStream(fileIn)) {
-                car = (Car) in.readObject();
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(ReadExcel.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            fileIn.close();
-        }
-                
-        //increments and writes rowNum counter at cell (0,0)
-        row = sheet.getRow(0);
-        cell = row.getCell(0);
-        cell.setCellValue(rowNum + 1);  
-        
-        try (FileOutputStream fileOut = new FileOutputStream("data.xlsx")) {
-            workbook.write(fileOut);
-            fileOut.close();
-        }
-        
-        return car;
-    }
-    
-    /**
-     * This method returns the number of cars in the sheet that have not yet been read in.
-     * 
-     * @return integer number of cars available for reading. 
-     * @author Chris Tisdale
-     * @since 1.08a
      */
-    public int getNumAvailableCars() {
-        return getNumCars()-getNumCarsRead();
-    }
+    public void resetCarOutput() throws IOException {
+        sheet = workbook.getSheetAt(2);
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            XSSFRow row = sheet.getRow(i);
+            sheet.removeRow(row);
+        }
 
-    /**
-     * This method returns the number of cars that
-     * can be read in from the third sheet.
-     * 
-     * @return integer representing number of cars in sheet.
-     * @author Chris Tisdale
-     * @since 1.08a
-     */
-    public int getNumCars() {
-        sheet = workbook.getSheetAt(2);
-        int rowNum = sheet.getLastRowNum();
-        return rowNum;
-    }
- 
-    /**
-     * This method returns the number of cars read in so far on the current run.
-     * 
-     * @return integer number of cars read.
-     * @author Chris Tisdale
-     * @since 1.08a
-     */
-    public int getNumCarsRead() {
-        DataFormatter formatter;
-        formatter = new DataFormatter();
-        sheet = workbook.getSheetAt(2);
-        XSSFRow row = sheet.getRow(0);
-        XSSFCell cell = row.getCell(0);
-        String rowNumString = formatter.formatCellValue(cell);
-        int numRead = Integer.parseInt(rowNumString)-1;
-        return numRead;
-    }
-    
-    /**
-     * This method returns the number of cars written to the 
-     * third sheet.
-     * 
-     * @return integer number of cars written.
-     * @author Chris Tisdale
-     * @since 1.08a
-     */
-    public int getNumCarsWritten() {
-        sheet = workbook.getSheetAt(2);
-        int rowNum = sheet.getLastRowNum();
-        return rowNum;
-    }
-    
-    /**
-     * This method resets the number of cars read in from the file.
-     * It sets the first cell of sheet 2 back to 1 for the next run.
-     * 
-     * Must be run at the end or beginning of each run or read in car
-     * sheet will be reading from the last row of the previous run.
-     * 
-     * @throws java.io.IOException
-     * @author Chris Tisdale
-     * @since 1.08a
-     */
-    public void resetReadCars() throws IOException {      
-        sheet = workbook.getSheetAt(2);
-        XSSFRow row = sheet.createRow(0);
-        XSSFCell cell = row.createCell(0);
-        cell.setCellValue(1);
-        
         try (FileOutputStream fileOut = new FileOutputStream("data.xlsx")) {
             workbook.write(fileOut);
             fileOut.close();
         }
     }
-    
+  
     /**
      * This method makes a "deep clone" of any Java object it is given.
      * Algorithm for this method from alvinalexander.com
