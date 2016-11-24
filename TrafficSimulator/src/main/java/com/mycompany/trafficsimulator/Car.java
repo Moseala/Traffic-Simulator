@@ -1,5 +1,6 @@
 package com.mycompany.trafficsimulator;
 
+import java.util.ArrayList;
 import java.util.Queue;
 
 /**
@@ -39,6 +40,9 @@ public class Car implements Actor, Runnable{
     private String endPoint;
     private String id;
     private int timeWaitedAtSignal;
+    private ArrayList<Integer> signalTimesAL;
+    private ArrayList<Integer> stopSignTimeAL;
+    private int lastSignal;
     
     /**
      * Constructor for car object, car status defaults to WAITING_TO_ENTER_SIGNAL_QUEUE, as it should be waiting to be spawned.
@@ -57,6 +61,8 @@ public class Car implements Actor, Runnable{
         id = "" +carType + "--" + directions.peek().getIdentifier();
         startPoint = directions.peek().getIdentifier();
         timeWaitedAtSignal = 0;
+        signalTimesAL = new ArrayList<>();
+        stopSignTimeAL = new ArrayList<>();
     }
     
     /**
@@ -92,8 +98,9 @@ public class Car implements Actor, Runnable{
     }
     
     /**
-     * This method passes the continue flag to this car object. It returns the id of the next traffic signal that 
-     * it needs to go to.
+     * This method passes the continue flag to this car object. It also stores metric
+     * calculations to their respective locations. 
+     * It returns the id of the next traffic signal that it needs to go to.
      * 
      * @return the unique id of the next traffic signal to go to.
      * @author Erik Clary
@@ -105,10 +112,16 @@ public class Car implements Actor, Runnable{
             carStatus = TRAVELLING;
             timeRemainingOnCurrentRoad = CarBehavior.getTime(carType, nextRoad);
             endPoint = nextRoad.getIdentifier();
+            if(lastSignal >= SignalBehavior.TRAFFICLIGHTA)
+                signalTimesAL.add(timeWaitedAtSignal);
+            if(lastSignal == SignalBehavior.STOPSIGN)
+                stopSignTimeAL.add(timeWaitedAtSignal);
+            lastSignal = nextRoad.getSignalType();
             timeWaitedAtSignal = 0;
             return endPoint;
         }
         catch(NullPointerException e){
+            timeWaitedAtSignal = 0;
             return null;
         }
     }
@@ -188,6 +201,34 @@ public class Car implements Actor, Runnable{
     @Override
     public void run() {
         act();
+    }
+
+    /**
+     * This method returns the average of times this car has waited at signals.
+     * @author Erik Clary
+     * @since 1.09a
+     * @return Average of the time spent at signals.
+     */
+    public double getTimeAtSignalLight() {
+        double avg = 0;
+        for(int x = 0; x<signalTimesAL.size(); x++){
+            avg += (int)signalTimesAL.get(x);
+        }
+        return (double)avg/signalTimesAL.size();
+    }
+
+    /**
+     * This method returns the average of times this car has waited at stop signs.
+     * @author Erik Clary
+     * @since 1.09a
+     * @return Average of the time spent at stop signs.
+     */
+    public double getTimeAtStopSigns() {
+        double avg = 0;
+        for(int x = 0; x<stopSignTimeAL.size(); x++){
+            avg += (int)stopSignTimeAL.get(x);
+        }
+        return (double)avg/stopSignTimeAL.size();
     }
 
 

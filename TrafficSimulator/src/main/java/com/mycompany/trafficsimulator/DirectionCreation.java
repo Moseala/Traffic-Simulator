@@ -21,11 +21,12 @@ import java.util.Random;
  *          <li> 1.00a | 10/03/2016: Initial commit </li> 
  *          <li> 1.05a | 11/07/2016: Created getDirections method & algorithm</li>
  *          <li> 1.08a | 11/14/2016: Added functionality for Chris' change from string finding on traffic signals to passing the object</li>
+ *          <li> 1.09a | 11/23/2016: Continued balancing direction length. </li>
  *      </ul>
  */
 public class DirectionCreation {
     private final Random rng;
-    private final int MAXDIRECTIONLENGTH = 12;
+    private final int MAXDIRECTIONLENGTH = 10;
     
     /**
      * Constructor for this class, accepts a seed for the Random
