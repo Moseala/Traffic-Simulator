@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 /**
  * The Map class contains all the actors for the Traffic Simulation. It also contains the 
@@ -27,6 +28,7 @@ import java.util.concurrent.TimeUnit;
  *          <li> 1.07a | 11/09/2016:    Added supporting methods getTotalCarsNeeded and getRandomPoint for use in creation logic.
  *                                      Shifted the addition of cars to the queue outside of the constructor into its own method.</li>
  *          <li> 1.08a | 11/14/2016:    Changed car curve equation to something more managable for testing. **on average needs to be around 63,000</li>
+ *          <li> 1.09a | 11/23/2016:    Added heavy multithreading support and fixed handoff bugs.
  *      </ul>
  */
 public class Map implements Runnable{
@@ -52,21 +54,13 @@ public class Map implements Runnable{
      * 
      * @param signalGroups      An array list containing all the signal groups(nodes) in the map.
      * @param trafficSignals    An array list containing all the traffic signals in the map.
+     * @author Erik Clary
      */
     public Map(ArrayList<SignalGroup> signalGroups, ArrayList<TrafficSignal> trafficSignals){
         nodes = signalGroups;
         signals = trafficSignals;
         runningCars = new ArrayList();
         despawnedCars = new ArrayList();
-        
-        /*empty map starting configuration
-        for(SignalGroup e: signalGroups){
-            actors.add(e);
-        }
-        for(TrafficSignal e: trafficSignals){
-            actors.add(e);
-        }*/
-        
     }
     
     /**
@@ -74,12 +68,17 @@ public class Map implements Runnable{
      * more cars to run.
      * @param cars              A queue of cars to pull from and insert into the system.
      * @since 1.07a
+     * @author Erik Clary
      */
     public void addInitialCars(Queue<Car> cars){
         spawnCars = cars;
         Collections.sort(signals);
     }
     
+    /**
+     * This method is used to display how many actors are currently functioning in the system.
+     * @return The number of actors currently running in the system.
+     */
     public int actorsInSystem(){
         return nodes.size() + signals.size() + runningCars.size();
     }
@@ -96,37 +95,43 @@ public class Map implements Runnable{
      *              <li>The traffic signal's exit queue is then cleared to prevent duplicate cars.</li> 
      *          </ol>
      * @since 1.04a
+     * @author Erik Clary
      */
     @Override
     public void run() {
         for(currentRunningSecond =0; currentRunningSecond <TIMETORUN; currentRunningSecond++){
-            //System.out.println("Progress: " + getProgress()); //debug
             addCars(currentRunningSecond);
             //Break actor list into cars/trafficsignals
-            ExecutorService taskExec = Executors.newCachedThreadPool();
+            ExecutorService taskExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()); //or use newCachedThreadPool, works too
             for(Car e:runningCars){
                 taskExec.execute(e);
             }
-            taskExec.shutdown(); //debug, works
+            
+            for(SignalGroup e:nodes){
+                taskExec.execute(e);
+            }
+            //these probably cannot run at the same time. unless regressive on the second i.e. changes to signals from group is pushed after run instead of before.
+            for(TrafficSignal e:signals){
+                taskExec.execute(e);
+            }
+            
+            taskExec.shutdown(); //improvement: this still works
             try{
                 taskExec.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
             }catch(InterruptedException e){
-                System.out.println("Task await has been interrupted");
+                System.out.println("Task Signal await has been interrupted");
             }
             //finish multithread
             
             //group run section
             for(SignalGroup e: nodes){
-                e.act();
                 ArrayList<TrafficSignal> activate = e.getSignalsOn();
                 for(TrafficSignal t: activate){
                     findTrafficSignal(t.getIdentifier(),0,signals.size()-1).thisSignalOn();
                 }
             }
-            
             //signal run section
             for(TrafficSignal e:signals){ //this is the loop that moves the outgoing cars from their traffic signals to their new destination.
-                e.act();
                 if(e.getOutgoingCars().size()!=0){
                     //System.out.println("Signal " + e.getIdentifier() + " has " + e.getOutgoingCars().size() + " outgoing Cars"); //debug
                     for(int outCarsIterator =0; outCarsIterator <e.getOutgoingCars().size(); outCarsIterator++){
@@ -159,6 +164,7 @@ public class Map implements Runnable{
      * This method returns the progress of the map's simulation
      * @return A percentage representing the completion progress of the simulation.
      * @since 1.04a
+     * @author Erik Clary
      */
     public double getProgress(){
         return ((double)currentRunningSecond)/TIMETORUN;
@@ -169,6 +175,7 @@ public class Map implements Runnable{
      * Only call this method after run() has completed (you can check getProgress for a 1.0 value)
      * @return An ArrayList populated by the cars that have finished their routes.
      * @since 1.05a
+     * @author Erik Clary
      */
     public ArrayList<Car> getDespawnedCars(){
         return despawnedCars;
@@ -180,6 +187,7 @@ public class Map implements Runnable{
      * @param currentMoment The current running second of the simulation.
      * @return The curve value based on the passed value.
      * @since 1.04a
+     * @author Erik Clary
      */
     private int carCurve(int currentMoment){
         return  (int) ((Math.abs(Math.sin(PERIOD*currentMoment))*AMPLITUDE) + ySHIFT);
@@ -190,6 +198,7 @@ public class Map implements Runnable{
      * feeder roads by popping their first direction (which is their spawn signal) and searching for its traffic signal.
      * @param currentMoment 
      * @since 1.04a
+     * @author Erik Clary
      */
     private void addCars(int currentMoment){
         if(spawnCars.peek()==null){
@@ -206,6 +215,7 @@ public class Map implements Runnable{
      * This method will poll the XML/main for more cars to add to the feeder queue.
      * @param amount        The amount of cars you want to add
      * @since 1.04a
+     * @author Erik Clary
      */
     private void requestMoreCars(int amount) {
         DirectionCreation directions = new DirectionCreation(rng);
@@ -223,6 +233,7 @@ public class Map implements Runnable{
      * @return          True if the nextQueue is contained in the same traffic group as e, false otherwise.
      * @see SignalGroup
      * @since 1.04a
+     * @author Erik Clary
      */
     private boolean verifyNextDirection(String nextQueue, TrafficSignal e) {
         for(SignalGroup group:nodes){
@@ -240,6 +251,7 @@ public class Map implements Runnable{
      * @param end           End index to search (should always be list.size())
      * @return The TrafficSignal that has a unique identifier that matches the parameter, null otherwise.
      * @since 1.04a
+     * @author Erik Clary
      */
     private TrafficSignal findTrafficSignal(String identifier, int begin, int end){//needs to be tested
         if(begin<=end){
@@ -262,6 +274,7 @@ public class Map implements Runnable{
      * @return The exits of the parameter given.
      * @since 1.05a
      * @see DirectionCreation
+     * @author Erik Clary
      */
     public ArrayList<TrafficSignal> getExitsOf(TrafficSignal currentPoint) {
         for(SignalGroup e: nodes){
@@ -270,11 +283,23 @@ public class Map implements Runnable{
         }
         return null;
     }
+    
+    /**
+     * This method is used to return the traffic signals present in the system. Should only be used to gather metrics after
+     * this class has finished executing.
+     * @return An ArrayList containing the traffic signals in this map.
+     * @author Erik Clary
+     * @since 1.09a
+     */
+    public ArrayList<TrafficSignal> getTrafficSignals(){
+        return signals;
+    }
 
     /**
      * Returns the integral of the car curve between 0 and TIMETORUN
      * @return the amount of cars that will be required for this map to run completely.
      * @since 1.07a
+     * @author Erik Clary
      */
     public int getTotalCarsNeeded() {
         int returnable = 0;
@@ -290,6 +315,7 @@ public class Map implements Runnable{
      *              the run-to-run operation of this method will be compromised.
      * @return A random traffic signal pulled from the list in this map.
      * @since 1.07a
+     * @author Erik Clary
      */
     public TrafficSignal getRandomPoint(Random seed){
         return signals.get((seed.nextInt(signals.size())));

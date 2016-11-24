@@ -136,6 +136,7 @@ public class MainApp extends Application {
      * launched through deployment artifacts, e.g., in IDEs with limited FX
      * support. NetBeans ignores main().
      *
+     * @author Erik Clary
      * @param args the command line arguments
      */
     public static void main(String[] args) throws InterruptedException {
@@ -188,7 +189,7 @@ public class MainApp extends Application {
             }
         }*/
         
-        for(int x = 0; x<500/*createdMap.getTotalCarsNeeded()*/; x++){
+        for(int x = 0; x<createdMap.getTotalCarsNeeded(); x++){
             Car newCar = new Car(Car.REGULAR_CAR,directions.getDirections(createdMap, createdMap.getRandomPoint(rand), createdMap.getRandomPoint(rand)));
             carQueue.add(newCar);
             System.out.println("Created car: " +x + " of " +createdMap.getTotalCarsNeeded());
@@ -208,7 +209,7 @@ public class MainApp extends Application {
         while(mapThread.isAlive()){
             System.out.println("Map Progress:       " + createdMap.getProgress());
             System.out.println("Actors in System:   " + createdMap.actorsInSystem());
-            //System.out.println("Cars finished:      " + createdMap.getDespawnedCars().size());
+            System.out.println("Cars finished:      " + createdMap.getDespawnedCars().size());
             Thread.sleep(1000);
         }
         

@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Semaphore;
 
 /**
  * Traffic Signal class is an object to be used as a part of a traffic signal group.
@@ -30,9 +32,10 @@ import java.util.Queue;
  *                                      Implemented Comparator, and added required methods.
  *                                      Added overriding .equals for compatibility with ArrayList.contains</li>
  *          <li> 1.08a | 11/14/2016:    Added functionality for Chris' change from string finding on traffic signals to passing the object (implements serializable)</li>
+ *          <li> 1.09a | 11/23/2016:    Added metric functionality as per Joey's documentation. Added multithreading support for this class' logic, and fixed bugs pertaining.</li> 
  *      </ul>
  */
-    public class TrafficSignal implements Actor, Comparable, Comparator<TrafficSignal>, Serializable{
+    public class TrafficSignal implements Actor, Comparable, Comparator<TrafficSignal>, Serializable, Runnable{
     private final int signalType;
     private Queue<Car> carQueue;
     private ArrayList<Car> roadCars;
@@ -41,6 +44,7 @@ import java.util.Queue;
     private final int[] coordinates;
     private final String identifier;
     private boolean lightActive;
+    private ArrayList<Integer> waitTimes;
     
     /**
      * Constructor for this class, accepts an integer as signal type,
@@ -63,6 +67,7 @@ import java.util.Queue;
         this.coordinates = coordinates;
         carQueue = new LinkedList();
         roadCars = new ArrayList();
+        waitTimes = new ArrayList();
     }
     
     /**
@@ -207,25 +212,34 @@ import java.util.Queue;
             else
                 carRoadIter++;
         }
-        /* java.util.ConcurrentModificationException solution 1
-        for(Car feeder: roadCars){
-            if(feeder.getCarStatus() == Car.WAITING_TO_ENTER_SIGNAL_QUEUE){
-                carQueue.add(feeder);
-                feeder.carAddedToSignal();
-                roadCars.remove(feeder);// this needs to be tested to ensure that the car is removed correctly
-            }
-        }*/
         //Step 2: Check to see if signal is active: if so, then dequeue a car on tick, add to outgoing array, then sets light to false.
         if(lightActive){
             if(!carQueue.isEmpty()){
-                //System.out.println("Light " + identifier + "is releasing a car."); //debug
                 for(int i = 0; i< this.getBehavior().getCarAmountToRelease(); i++){
-                    outGoingCars.add(carQueue.poll());
+                    Car outC = carQueue.poll();
+                    waitTimes.add(outC.getTimeAtSignal());
+                    outGoingCars.add(outC);
                 }
             }
             lightActive = false;
         }
     }
+    
+    /**
+     * This method returns the average time waited by all cars exited by this traffic signal.
+     * @return The average time cars spent at this signal.
+     * @author Erik Clary
+     * @since 1.09a
+     */
+    public double getAverageWaitTime(){
+        double sum = 0;
+        for(int x = 0; x<waitTimes.size(); x++){
+            sum += (int) waitTimes.get(x);
+        }      
+        return (sum/waitTimes.size());
+    }
+    
+    
     
     /**
      * This method returns an array of cars that are leaving this signal. This 
@@ -321,4 +335,13 @@ import java.util.Queue;
         return (int)Math.sqrt(x+y);
     }
 
+    /**
+     * This method enables mulithreading of the traffic signal's operation.
+     * @author Erik Clary
+     * @since 1.09a
+     */
+    @Override
+    public void run() {
+        act();
+    }
 }

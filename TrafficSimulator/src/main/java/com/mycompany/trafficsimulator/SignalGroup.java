@@ -1,6 +1,8 @@
 package com.mycompany.trafficsimulator;
 
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Semaphore;
 /**
  * Signal class is an object to be used to encapsulate a group of signals that it 
  * operates, and the exit roads attached to it.
@@ -18,9 +20,10 @@ import java.util.ArrayList;
  *          <li> 1.04a | 11/02/2016: Cleaned up javadoc </li>
  *          <li> 1.05a | 11/07/2016: Revamped functionality for easier car passing; the exit road list is now populated by the traffic signals instead of the roads.
  *                                   Added hasEntrance and getExits for functionality with DirectionCreation.</li>
+ *          <li> 1.09a | 11/23/2106: Added multithreading support, fixed bugs pertaining to handoff activation of traffic signals contained in this group</li>
  *      </ul>
  */
-public class SignalGroup implements Actor{
+public class SignalGroup implements Actor, Runnable{
     private int operationIterator;
     private boolean readyForNextOperation;
     private int[] signalTimeArray;
@@ -156,5 +159,15 @@ public class SignalGroup implements Actor{
     ArrayList<TrafficSignal> getExitSignals() {
         return exitRoads;
     }
-    
+
+    /**
+     * This method enables the multithreading of the signal group's operation.
+     * @author Erik Clary
+     * @since 1.09a
+     */
+    @Override
+    public void run() {
+        act();
+    }
+
 }

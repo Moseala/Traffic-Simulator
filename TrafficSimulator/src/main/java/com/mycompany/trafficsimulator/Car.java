@@ -20,6 +20,7 @@ import java.util.Queue;
  *          <li> 1.05a | 11/07/2016: Added missing javadoc, added getTimeAlive method for metrics.</li>
  *          <li> 1.07a | 11/09/2016: Added start/end points, needs to be finished.</li>
  *          <li> 1.08a | 11/14/2016: Added functionality for Chris' change from string finding on traffic signals to passing the object (implements serializable)</li>
+ *          <li> 1.09a | 11/23/2016: Added functionality for Joey's metric pulls, added multithreading support for this class.</li>
  *      </ul>
  */
 public class Car implements Actor, Runnable{
@@ -37,6 +38,7 @@ public class Car implements Actor, Runnable{
     private String startPoint;
     private String endPoint;
     private String id;
+    private int timeWaitedAtSignal;
     
     /**
      * Constructor for car object, car status defaults to WAITING_TO_ENTER_SIGNAL_QUEUE, as it should be waiting to be spawned.
@@ -53,6 +55,40 @@ public class Car implements Actor, Runnable{
         carType = CAR_TYPE;
         carStatus = WAITING_TO_ENTER_SIGNAL_QUEUE;
         id = "" +carType + "--" + directions.peek().getIdentifier();
+        startPoint = directions.peek().getIdentifier();
+        timeWaitedAtSignal = 0;
+    }
+    
+    /**
+     * This method returns the time that this car has waited at the current signal
+     * 
+     * @author Erik Clary
+     * @return Time as seconds the car has waited.
+     * @since 1.09a
+     */
+    public int getTimeAtSignal(){
+        return timeWaitedAtSignal;
+    }
+    
+    /**
+     * This method returns the car's starting signal's identifier as a String.
+     * 
+     * @author Erik Clary
+     * @return The unique id of this car's starting signal.
+     * @since 1.09a
+     */
+    public String getStartPoint(){
+        return startPoint;
+    }
+    
+    /**
+     * This method returns the car's ending signal's identifier as a String.
+     * @author Erik Clary
+     * @return The unique id of this car's final signal.
+     * @since 1.09a
+     */
+    public String getEndPoint(){
+        return endPoint;
     }
     
     /**
@@ -65,11 +101,12 @@ public class Car implements Actor, Runnable{
      */
     public String passContinueSignal(){
         try{
-            //System.out.println("Car " + id + " has " + directions.size()+ " directions"); //debug
             TrafficSignal nextRoad = directions.poll();
             carStatus = TRAVELLING;
             timeRemainingOnCurrentRoad = CarBehavior.getTime(carType, nextRoad);
-            return nextRoad.getIdentifier();
+            endPoint = nextRoad.getIdentifier();
+            timeWaitedAtSignal = 0;
+            return endPoint;
         }
         catch(NullPointerException e){
             return null;
@@ -80,6 +117,7 @@ public class Car implements Actor, Runnable{
      * This method returns the amount of time the car has been alive for.
      * @return Time this car has been alive for [as double].
      * @since 1.05a
+     * @author Erik Clary
      */
     public double getAliveTime(){
         return timeAlive;
@@ -97,6 +135,13 @@ public class Car implements Actor, Runnable{
         return carStatus;
     }
     
+    /**
+     * This method returns the car's unique ID
+     * 
+     * @author Erik Clary
+     * @return A string that can be used to identify this car: "CAR_TYPE--StartingPosition"
+     * @since 1.09a
+     */
     public String getCarID(){
         return id;
     }
@@ -125,6 +170,7 @@ public class Car implements Actor, Runnable{
     public void act(){
         timeAlive += 1;
         if(carStatus == WAITING_AT_SIGNAL){
+            timeWaitedAtSignal++;
             return; //if this car is waiting for a signal, do nothing.
         }
         
@@ -134,8 +180,15 @@ public class Car implements Actor, Runnable{
         }
     }
 
+    /**
+     * This method enables multithreading of the car class' act/logic.
+     * @author Erik Clary
+     * @since 1.09a
+     */
     @Override
     public void run() {
         act();
     }
+
+
 }
