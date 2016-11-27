@@ -14,7 +14,7 @@ public class Output
 {
     private String destination;
     private int signalType;
-    private int waitTime;
+    private double waitTime;
     private int carAlive;
     
     public Output()
@@ -25,7 +25,7 @@ public class Output
         this.waitTime = 0;
     }
     
-    public Output(String destination, int carAlive, int signalType, int waitTime)
+    public Output(String destination, int carAlive, int signalType, double waitTime)
     {
         this.destination = destination;
         this.carAlive = carAlive;
@@ -49,7 +49,7 @@ public class Output
         this.signalType = signalType;
     }
 
-    public int getWaitTime() {
+    public double getWaitTime() {
         return waitTime;
     }
 

@@ -33,6 +33,7 @@ import java.util.concurrent.Semaphore;
  *                                      Added overriding .equals for compatibility with ArrayList.contains</li>
  *          <li> 1.08a | 11/14/2016:    Added functionality for Chris' change from string finding on traffic signals to passing the object (implements serializable)</li>
  *          <li> 1.09a | 11/23/2016:    Added metric functionality as per Joey's documentation. Added multithreading support for this class' logic, and fixed bugs pertaining.</li> 
+ *          <li> 1.10b | 11/27/2016:    Added a method that returns the amount of cars that have passed through this signal to prepare for the analytics pull.
  *      </ul>
  */
     public class TrafficSignal implements Actor, Comparable, Comparator<TrafficSignal>, Serializable, Runnable{
@@ -217,6 +218,8 @@ import java.util.concurrent.Semaphore;
             if(!carQueue.isEmpty()){
                 for(int i = 0; i< this.getBehavior().getCarAmountToRelease(); i++){
                     Car outC = carQueue.poll();
+                    if(outC == null)
+                        break;
                     waitTimes.add(outC.getTimeAtSignal());
                     outGoingCars.add(outC);
                 }
@@ -239,7 +242,15 @@ import java.util.concurrent.Semaphore;
         return (sum/waitTimes.size());
     }
     
-    
+    /**
+     * This method returns the amount of cars that have passed through this signal as int.
+     * @return the amount of cars that has passed through this signal
+     * @since 1.10b
+     * @author Erik Clary
+     */
+    public int getTotalCarsThrough() {
+        return waitTimes.size();
+    }
     
     /**
      * This method returns an array of cars that are leaving this signal. This 
@@ -344,4 +355,5 @@ import java.util.concurrent.Semaphore;
     public void run() {
         act();
     }
+
 }

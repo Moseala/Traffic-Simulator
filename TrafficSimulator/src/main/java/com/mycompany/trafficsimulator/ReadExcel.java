@@ -2,6 +2,7 @@ package com.mycompany.trafficsimulator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -9,7 +10,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,7 +28,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * roads, Traffic Signals, and Signal Groups.
  * 
  * 
- * @author Chris Tisdale
+ * @author Chris Tisdale, Erik Clary
  * @version %I%, %G%
  * @since 1.06a
  * <p> <b>Date Created: </b>November 8, 2016 
@@ -43,6 +46,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *                                      Cleaned up logic for setting signal order.
  *                                      Added deepClone, getRoadLength, getRoadSpeed methods.
  *                                      match standard java coding characteristics</li>
+ *          <li> 1.10b | 11/27/2016:    Fixed carQueue read/write methods.
  *      </ul>
  */
 public class ReadExcel implements Runnable{
@@ -373,7 +377,11 @@ public class ReadExcel implements Runnable{
      * @since 1.08a
      */
     public void writeCarQueue(Queue<Car> outCarQueue) {
-        try (FileOutputStream fos = new FileOutputStream("carQueue.txt"); ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+        try {
+            PrintWriter pw = new PrintWriter("carQueue.txt");
+            pw.close();
+            FileOutputStream fos = new FileOutputStream("carQueue.txt"); 
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
             oos.writeObject(outCarQueue);
             oos.close();
         } catch (IOException ex) {
@@ -390,16 +398,19 @@ public class ReadExcel implements Runnable{
      * @since 1.08a
      */
     public Queue<Car> readCarQueue() throws IOException {
-        Queue<Car> carQueue = null;
+        Queue<Car> carQueue = new LinkedList();
         FileInputStream fis = new FileInputStream("carQueue.txt");
         try (ObjectInputStream ois = new ObjectInputStream(fis)) {
-            try {
                 carQueue = (Queue<Car>) ois.readObject();
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(ReadExcel.class.getName()).log(Level.SEVERE, null, ex);
+                ois.close();
+            } catch (ClassNotFoundException | EOFException ex) {
+                
+            } finally{
+                fis.close();
+                PrintWriter pw = new PrintWriter("carQueue.txt");
+                pw.close();
+                return carQueue;
             }
-        }
-        return carQueue;
     }
 
     /**

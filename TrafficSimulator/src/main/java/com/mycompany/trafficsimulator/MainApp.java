@@ -1,5 +1,6 @@
 package com.mycompany.trafficsimulator;
 
+import java.awt.Frame;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -9,7 +10,6 @@ import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Application;
-import static javafx.application.Application.launch;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
@@ -27,33 +27,40 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
+import javafx.geometry.Pos;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
-
+/**
+ * This is the main launcher for the TrafficSimulator project.
+ * 
+ * @author Erik Clary
+ * @version %I%, %G%
+ * @since 1.10b
+ * <p> <b>Date Created: </b>November 27, 2016 
+ * <p> <b>Version Comments:</b> 
+ *      <ul> 
+ *          <li> 1.10b | 11/27/2016: Initial commit </li> 
+ *      </ul>
+ */
 public class MainApp extends Application {
     protected static int seed = 54861234;
-    Stage window;
-    BorderPane layout;
-    TableView<Output> table;
+    private Stage window;
+    private BorderPane layout;
+    private VBox leftStackBox;
+    private HBox bottomHBox;
+    private TableView<Output> table;
+    private int userCarNum = -1;
+    private int userCarTime = -1;
+    private Map createdMap;
+    
     
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("/fxml/Scene.fxml"));
         window = primaryStage;
-        window.setTitle("Traffic Simulator 2.0");
+        window.setTitle("Traffic Simulator 1.0");
         
         //GridPane with 10px padding all around edge
         GridPane grid = new GridPane();
@@ -66,30 +73,69 @@ public class MainApp extends Application {
         
         //File Menu items
         MenuItem fileExit = new MenuItem("_Exit");
-        fileMenu.getItems().add(fileExit);
-        fileExit.setOnAction(e -> window.close());
+        fileExit.setOnAction(e -> {
+            window.close();
+            System.exit(0);
+        });
+        MenuItem fileReset = new MenuItem("_Reset Configuration");
+        fileReset.setOnAction(e  -> {
+            userCarNum = -1;
+            userCarTime = -1;
+            }
+        );
+        
+        fileMenu.getItems().addAll(fileReset, fileExit);
         
         //Help Menu
         Menu helpMenu = new Menu("_Help");
         
         //Help Menu items
         MenuItem about = new MenuItem("_About");
-        helpMenu.getItems().add(about);
+        helpMenu.getItems().add(about);     //EC: if this doesnt return anything, remove it.
 
         // Main Menu Bar
         MenuBar menuBar = new MenuBar();
         menuBar.getMenus().addAll(fileMenu, helpMenu);
         
+        //Left-side items, code adapted from http://docs.oracle.com/javafx/2/layout/builtin_layouts.htm
+        leftStackBox = new VBox();
+        leftStackBox.setFillWidth(true);
+        ArrayList<Button> btnArray = new ArrayList<>();
+        
         // Car Button - Prompt for Car Number Value
-        Button btn = new Button();
-        GridPane.setConstraints(btn, 1, 2);
+        Button addCarBtn = new Button();
+        GridPane.setConstraints(addCarBtn, 1, 2);
         ConfirmBox cfb = new ConfirmBox();
-        btn.setText("Click To Add Cars");      
+        addCarBtn.setText("Click To Add Cars");      
         // Change Result to parameter for cars to execute. 
-        btn.setOnAction(e -> {
-        int result = cfb.display("Traffic Simulator 2.0","Enter a numaric value for number of cars");
-        System.out.print(result);
+        addCarBtn.setOnAction(e -> {
+            int[] result = cfb.display("Traffic Simulator 1.0", "Enter a numeric value for number of cars");
+            userCarNum = result[0];
+            userCarTime = result[1];
         });    
+        btnArray.add(addCarBtn);
+        
+        
+        //Start Simulation button
+        Button simStartBtn = new Button();
+        GridPane.setConstraints(simStartBtn, 1, 2);
+        simStartBtn.setText("Start Simulation");
+        simStartBtn.setOnAction(e -> {
+            try{
+                startSimulation();
+            }
+            catch(InterruptedException ex){
+                //EC: add an error message here
+            }
+        });
+        btnArray.add(simStartBtn);
+        
+        //EC: maybe add an update xlsx button? so the user can update the file. or do this after run.
+        
+        //End of buttons, add them to box
+        for(int x = 0; x<btnArray.size(); x++){
+            leftStackBox.getChildren().add(btnArray.get(x));
+        }
         
         //Building the Table
         //Destination Column
@@ -98,22 +144,22 @@ public class MainApp extends Application {
         destColumn.setCellValueFactory(new PropertyValueFactory<>("destination"));
         
         //signalType Column
-        TableColumn<Output, Integer> signalColumn = new TableColumn<>("Signal Type");
+        TableColumn<Output, String> signalColumn = new TableColumn<>("Signal Type");
         signalColumn.setMinWidth(100);
         signalColumn.setCellValueFactory(new PropertyValueFactory<>("signalType"));
         
         //waitTime Column
-        TableColumn<Output, Integer> waitColumn = new TableColumn<>("Wait Time");
+        TableColumn<Output, Double> waitColumn = new TableColumn<>("Average Wait Time");
         waitColumn.setMinWidth(100);
         waitColumn.setCellValueFactory(new PropertyValueFactory<>("waitTime"));
         
-        //carAlive Column
-        TableColumn<Output, Integer> carAliveColumn = new TableColumn<>("Car Alive");
+        //carAlive Column   EC: what does this signify to the user?
+        TableColumn<Output, Integer> carAliveColumn = new TableColumn<>("Car Amount");
         carAliveColumn.setMinWidth(100);
         carAliveColumn.setCellValueFactory(new PropertyValueFactory<>("carAlive"));
         
         table = new TableView<>();
-        table.setItems(getOutput());
+        //table.setItems(getOutput()); //EC: only do this after execution.
         table.getColumns().addAll(destColumn, signalColumn, waitColumn, carAliveColumn);
         
         
@@ -121,8 +167,9 @@ public class MainApp extends Application {
         // Layout of GUI
         layout = new BorderPane();
         layout.setTop(menuBar);
-        layout.setLeft(btn);
+        layout.setLeft(leftStackBox);
         layout.setCenter(table);
+        layout.setBottom(bottomHBox);
         Scene scene = new Scene(layout, 1200, 600);
         window.setScene(scene);
         window.show();
@@ -138,12 +185,12 @@ public class MainApp extends Application {
 
     
     //Get all of the Output
-    public ObservableList<Output> getOutput()
-        {
-            ObservableList<Output> output = FXCollections.observableArrayList();
-            output.add(new Output("Killeen Airport", 3, 3, 4));
-            return output;
-        }
+//    public ObservableList<Output> getOutput()
+//        {
+//            ObservableList<Output> output = FXCollections.observableArrayList();
+//            output.add(new Output("Killeen Airport", 3, 3, 4));
+//            return output;
+//        }
     
     /**
      * The main() method is ignored in correctly deployed JavaFX application.
@@ -155,9 +202,13 @@ public class MainApp extends Application {
      * @param args the command line arguments
      */
     public static void main(String[] args) throws InterruptedException {
-        //launch(args);
-        
+        launch(args);
+    }
+
+    private void startSimulation() throws InterruptedException{
+        ProgressWindow pWindow = new ProgressWindow(new javax.swing.JFrame(),false);
         //Read excel doc and build its lists& queues.
+        pWindow.updateAction("Reading in file.");
         ReadExcel creator;
         try {
             creator= new ReadExcel();
@@ -165,7 +216,9 @@ public class MainApp extends Application {
             Logger.getLogger(MainApp.class.getName()).log(Level.SEVERE, null, ex);
             return;
         }
+        pWindow.addToTextField("Reading in Excel file...");
         creator.run();
+        pWindow.addToTextField("Done!");
         /*
         Thread creationThread = new Thread(creator);
         creationThread.start();
@@ -173,43 +226,41 @@ public class MainApp extends Application {
             System.out.println("XLSX Progress: " + creator.getProgress());
             Thread.sleep(10000); //test to make sure this doesnt delay the created thread.
         }*/
-        System.out.println("Starting Map Generation.");
+        pWindow.addToTextField("Starting Map Generation...");
         //build map and cars from the read excel document
-        Map createdMap = creator.getMap();
+        createdMap = creator.getMap();
+        if(userCarNum !=-1 && userCarTime !=-1)
+            createdMap.userSettings(userCarNum, userCarTime);
         DirectionCreation directions = new DirectionCreation(seed);
         Queue<Car> carQueue = new LinkedList();
         Random rand = new Random(seed);
+        pWindow.addToTextField("Done!");
         
         //create read from xlsx to check to see how many cars are already within.
-        /*
-        if(creator.getNumCars() != createdMap.getTotalCarsNeeded()){
-            for(int x = 0; x<(createdMap.getTotalCarsNeeded()-creator.getNumCars()); x++){
-                try{
-                    Car newCar = new Car(Car.REGULAR_CAR,directions.getDirections(createdMap, createdMap.getRandomPoint(rand), createdMap.getRandomPoint(rand)));
-                    creator.writeACar(newCar);
-                    System.out.println("Created car: " +x + " of " +createdMap.getTotalCarsNeeded());
-                }
-                catch(IOException ex){
-                    Logger.getLogger(MainApp.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
+        pWindow.updateAction("Car Generation");
+        pWindow.addToTextField("Reading previously created cars...");
+        try {
+            carQueue = creator.readCarQueue();
+            if(carQueue == null)
+                carQueue = new LinkedList();
+        } catch (IOException ex) {
+            Logger.getLogger(MainApp.class.getName()).log(Level.SEVERE, null, ex);
+            pWindow.addToTextField("ERROR: Creator cant find the car file!");
         }
+        pWindow.addToTextField("Done!");
+        pWindow.addToTextField("Found " + carQueue.size() + " car(s) from previous execution!");
         
-        for(int x = 0; x<createdMap.getTotalCarsNeeded(); x++){
-            try{
-                carQueue.add(creator.readACar());
-            }
-            catch(IOException ex){
-                Logger.getLogger(MainApp.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }*/
         
-        for(int x = 0; x<createdMap.getTotalCarsNeeded(); x++){
+        pWindow.addToTextField("Generating Cars...");
+        int totalN = createdMap.getTotalCarsNeeded()-carQueue.size();
+        for(int x = 0; x<totalN; x++){
             Car newCar = new Car(Car.REGULAR_CAR,directions.getDirections(createdMap, createdMap.getRandomPoint(rand), createdMap.getRandomPoint(rand)));
             carQueue.add(newCar);
-            System.out.println("Created car: " +x + " of " +createdMap.getTotalCarsNeeded());
+            pWindow.updateProgressBar((double)x/totalN);
         }
+        pWindow.addToTextField("Done!");
         
+        creator.writeCarQueue(carQueue);
         
         //need to write this to xlsx to enhance runtime.
         //maybe thread the above?
@@ -219,19 +270,24 @@ public class MainApp extends Application {
         //createdMap.run(); //Debug run
         
         //now the map has everything needed to run. execute map's runtime in a new thread
+        pWindow.addToTextField("Pooling resources for multithreading...");
         Thread mapThread = new Thread(createdMap);
+        pWindow.addToTextField("Done!");
         mapThread.start();
+        pWindow.addToTextField("Simulation has begun!");
+        pWindow.updateAction("Running Simulation");
         while(mapThread.isAlive()){
-            System.out.println("Map Progress:       " + createdMap.getProgress());
-            System.out.println("Actors in System:   " + createdMap.actorsInSystem());
-            System.out.println("Cars finished:      " + createdMap.getDespawnedCars().size());
+//            System.out.println("Map Progress:       " + createdMap.getProgress());
+//            System.out.println("Actors in System:   " + createdMap.actorsInSystem());
+//            System.out.println("Cars finished:      " + createdMap.getDespawnedCars().size());
+            pWindow.updateProgressBar(createdMap.getProgress());
             Thread.sleep(1000);
         }
+        pWindow.addToTextField("Done!");
         
         //Mapthread is now finished, dump despawned cars back to xlsx for metrics.
-        System.out.println("Finished!");
-        ArrayList<Car> despawned = createdMap.getDespawnedCars();
-        System.out.println("Despawned: " + despawned.size());
+        //System.out.println("Finished!");
+        //ArrayList<Car> despawned = createdMap.getDespawnedCars();
         /*for(Car e: despawned){
             try {
                 creator.writeACar(e);
@@ -239,9 +295,22 @@ public class MainApp extends Application {
                 Logger.getLogger(MainApp.class.getName()).log(Level.SEVERE, null, ex);
             }
         }*/
-     
         
-        System.exit(0);
+        //outputdump
+        pWindow.addToTextField("Gathering output...");
+        pWindow.updateAction("Collecting output");
+        ObservableList<Output> output = FXCollections.observableArrayList();
+        ArrayList<TrafficSignal> finishedSignals = createdMap.getTrafficSignals();
+        for(int x = 0; x<finishedSignals.size(); x++){
+            output.add(new Output(finishedSignals.get(x).getSourceRoad().getName(), finishedSignals.get(x).getTotalCarsThrough(), finishedSignals.get(x).getSignalType(), finishedSignals.get(x).getAverageWaitTime()));
+            pWindow.updateProgressBar((double)x/finishedSignals.size());
+        }
+        pWindow.addToTextField("Done!");
+        table.setItems(output);
+        pWindow.updateAction("Simulation Finished!");
+        pWindow.updateProgressBar(1);
+        
+        pWindow.setVisible(false);
     }
-
+    
 }

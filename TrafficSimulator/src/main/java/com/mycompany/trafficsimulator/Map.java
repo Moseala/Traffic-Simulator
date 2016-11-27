@@ -28,7 +28,8 @@ import java.util.logging.Level;
  *          <li> 1.07a | 11/09/2016:    Added supporting methods getTotalCarsNeeded and getRandomPoint for use in creation logic.
  *                                      Shifted the addition of cars to the queue outside of the constructor into its own method.</li>
  *          <li> 1.08a | 11/14/2016:    Changed car curve equation to something more managable for testing. **on average needs to be around 63,000</li>
- *          <li> 1.09a | 11/23/2016:    Added heavy multithreading support and fixed handoff bugs.
+ *          <li> 1.09a | 11/23/2016:    Added heavy multithreading support and fixed handoff bugs.</li>
+ *          <li> 1.10b | 11/27/2016:    Added user controls, and the ability to utilize custom car and time allotments in this class' runtime.
  *      </ul>
  */
 public class Map implements Runnable{
@@ -40,6 +41,9 @@ public class Map implements Runnable{
     private int currentRunningSecond = 0;
     private int rng = 12345;
     private Random rand = new Random(rng);
+    private boolean forceUserOverride;
+    private int userTime;
+    private int userCarAmount;
     
     //these are the variables for the car creation curve. abs(sin(PERIOD*x))*AMPLITUDE
     private final int TIMETORUN = 43200; //this is the amount of seconds for this method to run. Default = 43200 (12 hrs)
@@ -61,6 +65,7 @@ public class Map implements Runnable{
         signals = trafficSignals;
         runningCars = new ArrayList();
         despawnedCars = new ArrayList();
+        forceUserOverride = false;
     }
     
     /**
@@ -73,6 +78,19 @@ public class Map implements Runnable{
     public void addInitialCars(Queue<Car> cars){
         spawnCars = cars;
         Collections.sort(signals);
+    }
+    
+    /**
+     * This method will 
+     * @param carAmount
+     * @param runningTime
+     * @author Erik Clary
+     * @since 1.10b
+     */
+    public void userSettings(int carAmount, int runningTime){
+        forceUserOverride = true;
+        userCarAmount = carAmount;
+        userTime = runningTime;
     }
     
     /**
@@ -99,7 +117,12 @@ public class Map implements Runnable{
      */
     @Override
     public void run() {
-        for(currentRunningSecond =0; currentRunningSecond <TIMETORUN; currentRunningSecond++){
+        int runtime = TIMETORUN;
+        if(forceUserOverride)
+            runtime = userTime;
+        for(currentRunningSecond =0; currentRunningSecond <runtime; currentRunningSecond++){
+            if(despawnedCars.size() == userCarAmount && forceUserOverride)
+                break; //if the user specifies a car amount, and all cars have finished execution, exit the simulation.
             addCars(currentRunningSecond);
             //Break actor list into cars/trafficsignals
             ExecutorService taskExec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()); //or use newCachedThreadPool, works too
@@ -167,7 +190,10 @@ public class Map implements Runnable{
      * @author Erik Clary
      */
     public double getProgress(){
-        return ((double)currentRunningSecond)/TIMETORUN;
+        if(!forceUserOverride)
+            return ((double)currentRunningSecond)/TIMETORUN;
+        else
+            return ((double)currentRunningSecond)/userTime;
     }
     
     /**
@@ -190,6 +216,11 @@ public class Map implements Runnable{
      * @author Erik Clary
      */
     private int carCurve(int currentMoment){
+        if(forceUserOverride){
+            if(currentMoment == 0)      //add user's specified car amount at the beginning, else do not add any.
+                return userCarAmount;
+            return 0;
+        }
         return  (int) ((Math.abs(Math.sin(PERIOD*currentMoment))*AMPLITUDE) + ySHIFT);
     }
     
@@ -201,10 +232,9 @@ public class Map implements Runnable{
      * @author Erik Clary
      */
     private void addCars(int currentMoment){
-        if(spawnCars.peek()==null){
-            requestMoreCars(carCurve(currentMoment));
-        }
         for(int x = 0; x<carCurve(currentMoment); x++){
+            if(spawnCars.peek()==null)
+                requestMoreCars(carCurve(currentMoment));
             Car spawned = spawnCars.poll();
             runningCars.add(spawned); //this adds the car to the stage(actor queue)
             findTrafficSignal(spawned.passContinueSignal(),0,signals.size()-1).addCar(spawned); //this adds the car to its spawner traffic signal.
@@ -303,6 +333,8 @@ public class Map implements Runnable{
      */
     public int getTotalCarsNeeded() {
         int returnable = 0;
+        if(forceUserOverride)
+            return userCarAmount;
         for(int x = 0; x<TIMETORUN; x++){
             returnable += carCurve(x);
         }

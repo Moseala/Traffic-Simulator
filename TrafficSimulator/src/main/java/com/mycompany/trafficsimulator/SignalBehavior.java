@@ -11,7 +11,8 @@ package com.mycompany.trafficsimulator;
  * <p> <b>Version Comments:</b> 
  *      <ul> 
  *          <li> 1.02a | 10/26/2016: Initial commit </li> 
- *          <li> 1.09a | 11/23/2016: Made final variables static so they may be referenced outside this class.
+ *          <li> 1.09a | 11/23/2016: Made final variables static so they may be referenced outside this class.</li>
+ *          <li> 1.10b | 11/27/2016: Balanced car amount to release, added javadoc.</li>
  *      </ul>
  */
 public class SignalBehavior {
@@ -23,10 +24,22 @@ public class SignalBehavior {
     public static final int TRAFFICLIGHTB = 4;     //green for 36 sec
     public static final int TRAFFICLIGHTC = 5;     //green for 24 sec
     
+    /**
+     * Constructor for signal type, should only be used with static variables included in this class.
+     * @param signalType 
+     * @author Erik Clary
+     * @since 1.02a
+     */
     public SignalBehavior(int signalType) {
         this.signalType = signalType;
     }
     
+    /**
+     * This method returns the time that a signal should function based on its type.
+     * @return The time as int in seconds that this signal should stay on for.
+     * @author Erik Clary
+     * @since 1.02a
+     */
     public int timeToFunction(){
         switch(signalType){
             case STOPSIGN: return 2;
@@ -37,8 +50,22 @@ public class SignalBehavior {
         }
     }
 
+    /**
+     * This method returns the amount of cars a signal should release based on its type.
+     * @return The amount of cars to release during one cycle (second) as int
+     * @author Erik Clary
+     * @since 1.02a
+     */
     public int getCarAmountToRelease() {
-        return 1;
+        switch(signalType){
+            case DESPAWNER: return 15; //always release all cars
+            case PASSTHROUGH: return 15;
+            case STOPSIGN: return 1;
+            case TRAFFICLIGHTA: return 5;
+            case TRAFFICLIGHTB: return 3;
+            case TRAFFICLIGHTC: return 1;
+            default: return 1;
+        }
     }
     
 }
