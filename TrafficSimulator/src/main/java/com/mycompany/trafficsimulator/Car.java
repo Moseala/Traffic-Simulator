@@ -1,5 +1,6 @@
 package com.mycompany.trafficsimulator;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Queue;
 
@@ -24,7 +25,7 @@ import java.util.Queue;
  *          <li> 1.09a | 11/23/2016: Added functionality for Joey's metric pulls, added multithreading support for this class.</li>
  *      </ul>
  */
-public class Car implements Actor, Runnable{
+public class Car implements Actor, Runnable, Serializable{
     public static final int WAITING_AT_SIGNAL = 0;
     public static final int TRAVELLING = 1;
     public static final int WAITING_TO_ENTER_SIGNAL_QUEUE = 2;
